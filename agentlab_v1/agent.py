@@ -6,7 +6,7 @@ from google.adk.models.lite_llm import LiteLlm
 # No schema classes needed; rely on conversation history for context
 
 # 1) Load your config file
-cfg = yaml.safe_load(open("agentlab_v2/config.yaml"))
+cfg = yaml.safe_load(open("agentlab_v1/config.yaml"))
 
 # 2) Create the leaf Agents
 idea_agent = Agent(
