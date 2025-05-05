@@ -1,24 +1,38 @@
-
-# agentlab_v2/agent.py
-
-import yaml
 import os
 import requests
-import time  # Import time module for timestamps
-from google.adk.agents import Agent, ParallelAgent, SequentialAgent, LoopAgent
+import yaml
+from dotenv import load_dotenv
+from typing import AsyncGenerator
+from typing_extensions import override
+from pydantic import Field
+from google.adk.agents import Agent, BaseAgent, ParallelAgent, SequentialAgent, LoopAgent
+from google.adk.agents.invocation_context import InvocationContext
+from google.adk.events import Event
 from google.adk.models.lite_llm import LiteLlm
-# No schema classes needed; rely on conversation history for context
+from pydantic import Field
+import logging
+logging.basicConfig(level=logging.INFO)
+
+# # Load environment and config
+# dotenv_path = os.path.join(os.getcwd(), ".env")
+# load_dotenv(dotenv_path)  # loads SERPAPI_KEY from .env
+# cfg = yaml.safe_load(open("agentlab_v1/config.yaml"))
+
+# # Tool: SerpAPI search
+# def serpapi_search(query: str):
+#     res = requests.get(
+#         f"https://serpapi.com/search.json?q={query}&api_key={os.getenv('SERPAPI_KEY')}"
+#     )
+#     return res.json().get("organic_results", [])
 
 # 1) Load your config file
 cfg = yaml.safe_load(open("agentlab_v1/config.yaml"))
 
-# 2) Create the leaf Agents
+# 1) Idea generation
 idea_agent = Agent(
     name="IdeaCoach",
     model=LiteLlm(model=cfg["model"]),
-    instruction=(
-        f"You are an idea coach. Brainstorm {cfg['num_ideas']} distinct ideas based on the user's last message."
-    ),
+    instruction=f"Brainstorm {cfg['num_ideas']} distinct ideas based on the user's last message.",
 )
 
 class SerpApiValidator(Agent):
@@ -49,42 +63,91 @@ validator = SerpApiValidator(
     ),
 )
 
+
+# 3) Generic InputAgent for human input
+
+
+# Modify the InputAgent implementation to use a custom memory key
+def InputAgentFactory(name: str, prompt: str, memory_key: str = "user_input") -> BaseAgent:
+    class InputAgent(BaseAgent):
+        prompt: str = Field(description="User prompt text")
+        memory_key: str = Field(description="Memory key to store input")
+        model_config = {"arbitrary_types_allowed": True}
+
+        def __init__(self, name: str, prompt: str, memory_key: str):
+            super().__init__(name=name, sub_agents=[], prompt=prompt, memory_key=memory_key)
+            self.memory_key = memory_key
+
+        @override
+        async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+            # --- If this invocation carries the user's reply, capture it ---
+            # Fix for AttributeError: 'InvocationContext' object has no attribute 'invocation'
+            # Assuming the correct structure based on the error suggestion
+            if hasattr(ctx, 'initial_user_content') and ctx.initial_user_content:
+                user_msg = ctx.initial_user_content.parts[0].text
+                ctx.session.state[self.memory_key] = user_msg
+                yield Event(content={self.memory_key: user_msg})
+                # Don't end the invocation here - let the pipeline continue to the next agent
+                # Set end_invocation to False explicitly to ensure pipeline continues
+                ctx.end_invocation = False
+                return
+
+            # --- Otherwise, send the prompt and pause the pipeline ---
+            yield Event(content=self.prompt)
+            # Pause the pipeline to wait for user input
+            ctx.end_invocation = True
+
+    return InputAgent(name=name, prompt=prompt, memory_key=memory_key)
+
+
+# We don't need pre_product_input since we want the workflow to continue automatically
+# after the user selects an idea ID without requiring additional input
+
+# 4) Use InputAgent to capture idea selection
+to_selection = InputAgentFactory(
+    name="UserSelector",
+    prompt="Select idea ID to proceed from the validated list:"
+)
+
+# 5) Product refinement based on human input
 product_manager = Agent(
     name="ProductManager",
     model=LiteLlm(model=cfg["model"]),
-    instruction="You are a product manager: from the ideas and scores generated so far, select the single most valuable idea.",
+    instruction="Refine and develop the idea indexed by memory['user_input'] from memory['IdeaCoach'].",
 )
 
-prompt_engineer = Agent(
+# 6) Prompt generation
+to_prompt = Agent(
     name="PromptEngineer",
     model=LiteLlm(model=cfg["model"]),
-    instruction="Write a self-contained AI prompt that implements the chosen solution clearly and completely.",
+    instruction="Write a self-contained AI prompt that implements the product concept clearly.",
 )
 
-# 3) Wrap Validator in a ParallelAgent (use sub_agents=...)
-validation_agent = ParallelAgent(
-    name="ValidateAll",
-    sub_agents=[validator],
-)
-
-# 4) Chain brainstorming → validation → selection
+# 7) Pipeline assembly
 gen_val_select = SequentialAgent(
     name="GenValidateSelect",
-    sub_agents=[idea_agent, validation_agent, product_manager],
+    sub_agents=[idea_agent, validator, to_selection, product_manager, to_prompt],
 )
 
-# 5) Loop a fixed number of times (ADK LoopAgent supports max_iterations only)
+# Define ensure_quality first
 ensure_quality = LoopAgent(
     name="EnsureQuality",
     sub_agents=[gen_val_select],
-    max_iterations=cfg["max_loops"],
+    max_iterations=cfg.get("max_loops", 1),
 )
 
-# 6) Final pipeline: loop → prompt engineer
+# Define feedback_agent
+feedback_agent = Agent(
+    name="FeedbackAgent",
+    model=LiteLlm(model=cfg["model"]),
+    instruction="Process feedback on the product concept.",
+)
+
+#Then define full_pipeline (only once)
 full_pipeline = SequentialAgent(
     name="FullWorkflow",
-    sub_agents=[ensure_quality, prompt_engineer],
+    sub_agents=[ensure_quality, feedback_agent]#, to_prompt],
 )
 
-# 7) Expose the root agent for `adk web`
+# Expose root agent
 root_agent = full_pipeline
