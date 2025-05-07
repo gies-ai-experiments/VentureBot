@@ -16,7 +16,7 @@ FROM python:3.13-slim
 WORKDIR /app
 
 # Copy the entire project contents into the container at /app
-# This includes all agentlab_v* directories, root requirements.txt, .env, etc.
+# This includes main.py, all agentlab_v* directories, root requirements.txt, .env, etc.
 COPY . /app/
 
 # Install any needed packages specified in the root requirements.txt
@@ -31,7 +31,5 @@ EXPOSE 80
 # ENV GOOGLE_CLOUD_LOCATION="your-gcp-location"
 # ENV GOOGLE_GENAI_USE_VERTEXAI="True" # If using Vertex AI
 
-# Run adk web when the container launches
-# The --host 0.0.0.0 makes it accessible from outside the container
-# No specific module is provided, so ADK should offer a choice if multiple are found.
-CMD ["adk", "web", "--host", "0.0.0.0", "--port", "80"] 
+# Run the FastAPI application using Uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"] 
