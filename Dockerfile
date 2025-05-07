@@ -10,7 +10,7 @@
 #    (You might need to configure your VM's firewall to allow traffic on port 80 if it's not already open).
 
 # Use an official Python runtime as a parent image
-FROM python:3.10-slim
+FROM python:3.13-slim
 
 # Set the working directory in the container
 WORKDIR /app
