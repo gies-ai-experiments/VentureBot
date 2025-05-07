@@ -1,0 +1,67 @@
+name: Deploy to VM on Main Push
+
+on:
+  push:
+    branches:
+      - main # Or your primary deployment branch
+      - deployment
+
+jobs:
+  deploy:
+    name: Deploy to Radiant Cloud VM
+    runs-on: ubuntu-latest # The type of machine to run the job on
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: 22
+          script: |
+            # Define variables for paths and names on the VM
+            PROJECT_DIR="/home/ubuntu/githubs"  # <-- IMPORTANT: VERIFY AND SET THIS TO YOUR PROJECT PATH ON THE VM
+            IMAGE_NAME="venturebots"
+            CONTAINER_NAME="venturebots-app"
+
+            echo "--- Navigating to project directory: $PROJECT_DIR ---"
+            # Create directory if it doesn't exist (for first-time deployment)
+            mkdir -p "$PROJECT_DIR"
+            cd "$PROJECT_DIR" || { echo "Failed to navigate to project directory. Exiting."; exit 1; }
+
+            echo "--- Initializing Git repo or ensuring it exists ---"
+            if [ ! -d ".git" ]; then
+              echo "Cloning repository..."
+              # Temporarily use a token if repo is private for cloning, or ensure SSH key on VM has repo access
+              # This example assumes public repo or SSH key on VM has clone access
+              # For private repos, you might need to pass a GITHUB_TOKEN or use deploy keys for cloning
+              git clone https://github.com/${{ github.repository }}.git . # Clone into current dir
+            else
+              # Ensure the remote is set correctly if it was cloned manually with a different origin
+              git remote set-url origin https://github.com/${{ github.repository }}.git || git remote add origin https://github.com/${{ github.repository }}.git
+            fi
+
+            echo "--- Creating/Updating .env file on VM ---"
+            echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
+
+            echo "--- Pulling latest changes from main branch ---"
+            git checkout main
+            git fetch origin main # Fetch latest
+            git reset --hard origin/main # Force current branch to match remote main
+            git pull origin main # As a fallback, or if you prefer merge strategy
+
+            echo "--- Building Docker image: $IMAGE_NAME ---"
+            docker build -t "$IMAGE_NAME" .
+
+            echo "--- Stopping and removing old container: $CONTAINER_NAME ---"
+            docker stop "$CONTAINER_NAME" || true
+            docker rm "$CONTAINER_NAME" || true
+
+            echo "--- Starting new container: $CONTAINER_NAME ---"
+            docker run -d -p 80:80 --env-file .env --name "$CONTAINER_NAME" "$IMAGE_NAME"
+
+            echo "--- Deployment to VM completed successfully! ---" 
