@@ -28,6 +28,19 @@ jobs:
             IMAGE_NAME="venturebots"
             CONTAINER_NAME="venturebots-app"
 
+            echo "--- Checking for Docker installation ---"
+            if ! command -v docker &> /dev/null
+            then
+                echo "Docker could not be found on the VM. Please install Docker and try again."
+                exit 1
+            fi
+            if ! docker ps &> /dev/null
+            then
+                echo "Docker daemon is not running or user cannot access it. Please check Docker setup on the VM."
+                exit 1
+            fi
+            echo "Docker is available and running."
+
             echo "--- Navigating to project directory: $PROJECT_DIR ---"
             # Create directory if it doesn't exist (for first-time deployment)
             mkdir -p "$PROJECT_DIR"
@@ -35,33 +48,49 @@ jobs:
 
             echo "--- Initializing Git repo or ensuring it exists ---"
             if [ ! -d ".git" ]; then
-              echo "Cloning repository..."
-              # Temporarily use a token if repo is private for cloning, or ensure SSH key on VM has repo access
-              # This example assumes public repo or SSH key on VM has clone access
-              # For private repos, you might need to pass a GITHUB_TOKEN or use deploy keys for cloning
-              git clone https://github.com/${{ github.repository }}.git . # Clone into current dir
+              echo "Cloning repository into $PROJECT_DIR..."
+              git clone "https://github.com/${{ github.repository }}.git" . # Clone into current dir
             else
-              # Ensure the remote is set correctly if it was cloned manually with a different origin
-              git remote set-url origin https://github.com/${{ github.repository }}.git || git remote add origin https://github.com/${{ github.repository }}.git
+              current_remote_url=$(git config --get remote.origin.url)
+              expected_remote_url="https://github.com/${{ github.repository }}.git"
+              if [ "$current_remote_url" != "$expected_remote_url" ]; then
+                git remote set-url origin "$expected_remote_url" || git remote add origin "$expected_remote_url"
+              fi
             fi
 
             echo "--- Creating/Updating .env file on VM ---"
             echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
 
-            echo "--- Pulling latest changes from main branch ---"
-            git checkout main
-            git fetch origin main # Fetch latest
-            git reset --hard origin/main # Force current branch to match remote main
-            git pull origin main # As a fallback, or if you prefer merge strategy
+            echo "--- Pulling latest changes from branch ---"
+            # Determine the branch being deployed
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            echo "Deploying from branch: $BRANCH_NAME"
+            git checkout $BRANCH_NAME
+            git fetch origin $BRANCH_NAME
+            git reset --hard origin/$BRANCH_NAME
 
             echo "--- Building Docker image: $IMAGE_NAME ---"
             docker build -t "$IMAGE_NAME" .
 
             echo "--- Stopping and removing old container: $CONTAINER_NAME ---"
-            docker stop "$CONTAINER_NAME" || true
-            docker rm "$CONTAINER_NAME" || true
+            docker stop "$CONTAINER_NAME" || true  # Ignore error if container doesn't exist
+            docker rm "$CONTAINER_NAME" || true   # Ignore error if container doesn't exist
 
             echo "--- Starting new container: $CONTAINER_NAME ---"
             docker run -d -p 80:80 --env-file .env --name "$CONTAINER_NAME" "$IMAGE_NAME"
 
-            echo "--- Deployment to VM completed successfully! ---" 
+            echo "--- Verifying container startup for $CONTAINER_NAME ---"
+            sleep 15 # Wait for 15 seconds to allow container to initialize or fail
+
+            # Check if the container is running and has not exited
+            # We look for a container with the exact name that is currently running
+            if docker ps --filter "name=^/${CONTAINER_NAME}$" --filter "status=running" --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+                echo "Container '$CONTAINER_NAME' started successfully and is running."
+                echo "--- Deployment to VM completed successfully! ---"
+            else
+                echo "Error: Container '$CONTAINER_NAME' did not start correctly or has exited."
+                echo "Recent logs for container '$CONTAINER_NAME':"
+                # Attempt to get logs, will fail if container never created a log stream
+                docker logs --tail 50 "$CONTAINER_NAME" || echo "Could not retrieve logs for $CONTAINER_NAME (it might not have started or written logs)."
+                exit 1 # Explicitly fail the deployment step
+            fi 
