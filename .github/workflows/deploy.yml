@@ -61,13 +61,32 @@ jobs:
             echo "--- Creating/Updating .env file on VM ---"
             echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
 
-            echo "--- Pulling latest changes from branch ---"
-            # Determine the branch being deployed
-            BRANCH_NAME=${GITHUB_REF#refs/heads/}
-            echo "Deploying from branch: $BRANCH_NAME"
-            git checkout $BRANCH_NAME
-            git fetch origin $BRANCH_NAME
-            git reset --hard origin/$BRANCH_NAME
+            # Get the branch name from GitHub context
+            CURRENT_BRANCH="${{ github.ref_name }}"
+            echo "--- Preparing to deploy branch: $CURRENT_BRANCH ---"
+
+            # Fetch all updates from the remote origin
+            echo "Fetching all remote branches and tags..."
+            git fetch origin --prune
+
+            # Ensure the target branch exists locally and is up-to-date
+            echo "Checking out branch $CURRENT_BRANCH..."
+            git checkout "$CURRENT_BRANCH"
+            
+            echo "Resetting $CURRENT_BRANCH to origin/$CURRENT_BRANCH..."
+            git reset --hard "origin/$CURRENT_BRANCH"
+            
+            # Optional: Clean up untracked files that might interfere (use with caution)
+            # echo "Cleaning workspace..."
+            # git clean -fdx
+
+            echo "--- Verifying Dockerfile exists ---"
+            if [ ! -f Dockerfile ]; then
+                echo "Dockerfile not found in $PROJECT_DIR after git operations! Listing files:"
+                ls -la
+                exit 1
+            fi
+            echo "Dockerfile found."
 
             echo "--- Building Docker image: $IMAGE_NAME ---"
             docker build -t "$IMAGE_NAME" .
