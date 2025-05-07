@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main # Or your primary deployment branch
-      - deployment
 
 jobs:
   deploy:
