@@ -1,0 +1,114 @@
+name: Deploy to VM on Main Push
+
+on:
+  push:
+    branches:
+      - main # Or your primary deployment branch
+
+jobs:
+  deploy:
+    name: Deploy to Radiant Cloud VM
+    runs-on: ubuntu-latest # The type of machine to run the job on
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: 22
+          script: |
+            # Define variables for paths and names on the VM
+            PROJECT_DIR="/home/ubuntu/githubs"  # <-- IMPORTANT: VERIFY AND SET THIS TO YOUR PROJECT PATH ON THE VM
+            IMAGE_NAME="venturebots"
+            CONTAINER_NAME="venturebots-app"
+
+            echo "--- Checking for Docker installation ---"
+            if ! command -v docker &> /dev/null
+            then
+                echo "Docker could not be found on the VM. Please install Docker and try again."
+                exit 1
+            fi
+            if ! docker ps &> /dev/null
+            then
+                echo "Docker daemon is not running or user cannot access it. Please check Docker setup on the VM."
+                exit 1
+            fi
+            echo "Docker is available and running."
+
+            echo "--- Navigating to project directory: $PROJECT_DIR ---"
+            # Create directory if it doesn't exist (for first-time deployment)
+            mkdir -p "$PROJECT_DIR"
+            cd "$PROJECT_DIR" || { echo "Failed to navigate to project directory. Exiting."; exit 1; }
+
+            echo "--- Initializing Git repo or ensuring it exists ---"
+            if [ ! -d ".git" ]; then
+              echo "Cloning repository into $PROJECT_DIR..."
+              git clone "https://github.com/${{ github.repository }}.git" . # Clone into current dir
+            else
+              current_remote_url=$(git config --get remote.origin.url)
+              expected_remote_url="https://github.com/${{ github.repository }}.git"
+              if [ "$current_remote_url" != "$expected_remote_url" ]; then
+                git remote set-url origin "$expected_remote_url" || git remote add origin "$expected_remote_url"
+              fi
+            fi
+
+            echo "--- Creating/Updating .env file on VM ---"
+            echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
+
+            # Get the branch name from GitHub context
+            CURRENT_BRANCH="${{ github.ref_name }}"
+            echo "--- Preparing to deploy branch: $CURRENT_BRANCH ---"
+
+            # Fetch all updates from the remote origin
+            echo "Fetching all remote branches and tags..."
+            git fetch origin --prune
+
+            # Ensure the target branch exists locally and is up-to-date
+            echo "Checking out branch $CURRENT_BRANCH..."
+            git checkout "$CURRENT_BRANCH"
+            
+            echo "Resetting $CURRENT_BRANCH to origin/$CURRENT_BRANCH..."
+            git reset --hard "origin/$CURRENT_BRANCH"
+            
+            # Optional: Clean up untracked files that might interfere (use with caution)
+            # echo "Cleaning workspace..."
+            # git clean -fdx
+
+            echo "--- Verifying Dockerfile exists ---"
+            if [ ! -f Dockerfile ]; then
+                echo "Dockerfile not found in $PROJECT_DIR after git operations! Listing files:"
+                ls -la
+                exit 1
+            fi
+            echo "Dockerfile found."
+
+            echo "--- Building Docker image: $IMAGE_NAME ---"
+            docker build -t "$IMAGE_NAME" .
+
+            echo "--- Stopping and removing old container: $CONTAINER_NAME ---"
+            docker stop "$CONTAINER_NAME" || true  # Ignore error if container doesn't exist
+            docker rm "$CONTAINER_NAME" || true   # Ignore error if container doesn't exist
+
+            echo "--- Starting new container: $CONTAINER_NAME ---"
+            docker run -d -p 80:80 --env-file .env --name "$CONTAINER_NAME" "$IMAGE_NAME"
+
+            echo "--- Verifying container startup for $CONTAINER_NAME ---"
+            sleep 15 # Wait for 15 seconds to allow container to initialize or fail
+
+            # Check if the container is running and has not exited
+            # We look for a container with the exact name that is currently running
+            if docker ps --filter "name=^/${CONTAINER_NAME}$" --filter "status=running" --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+                echo "Container '$CONTAINER_NAME' started successfully and is running."
+                echo "--- Deployment to VM completed successfully! ---"
+            else
+                echo "Error: Container '$CONTAINER_NAME' did not start correctly or has exited."
+                echo "Recent logs for container '$CONTAINER_NAME':"
+                # Attempt to get logs, will fail if container never created a log stream
+                docker logs --tail 50 "$CONTAINER_NAME" || echo "Could not retrieve logs for $CONTAINER_NAME (it might not have started or written logs)."
+                exit 1 # Explicitly fail the deployment step
+            fi 
