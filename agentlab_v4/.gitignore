@@ -1,6 +1,0 @@
-# compiled Python bytecode
-__pycache__/
-*.pyc
-
-# environment file with secrets
-.env
