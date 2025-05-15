@@ -84,6 +84,10 @@ The current system consists of:
 - Start date: May 25, 2025
 - End Date : June 30, 2025
 
+## Application Deadline
+
+- Applications due by: Friday, May 16, 2025, 11:59 PM CT
+
 ## How to Apply
 
 To apply, please:
