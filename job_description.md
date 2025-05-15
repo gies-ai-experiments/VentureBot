@@ -74,13 +74,15 @@ The current system consists of:
 - Experience with human-in-the-loop AI systems
 - Background in creativity tools or idea generation systems
 
-## Benefits
+## Payment
 
-- $20/hour for summer 
+- $20/hour 
 - 10 hours per week commitment
-- Opportunity to shape cutting-edge AI technology
-- Collaborative team of AI enthusiasts
-- Professional development opportunities
+
+## Duration
+
+- Start date: May 25, 2025
+- End Date : June 30, 2025
 
 ## How to Apply
 
