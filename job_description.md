@@ -96,6 +96,6 @@ To apply, please:
 3. Add your application materials in the following files:
    - `docs/resume.md`: Your resume in markdown format
    - `docs/cover-letter.md`: Your cover letter describing your relevant experience
-   - `docs/technical-demo/`: Add a small technical demo project showcasing your relevant skills
+   
 4. Submit a pull request with your application materials
 

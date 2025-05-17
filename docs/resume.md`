@@ -1,0 +1,70 @@
+# Niraj Patil  
+📍 Chicago, IL | 📧 nirajp2@illinois.edu | 📞 +1 (447) 902 7504  
+🔗 [LinkedIn](https://www.linkedin.com/in/nirajpatil01) | 🔗 [GitHub](https://github.com/Nstar9)
+
+---
+
+## 🎓 Education
+
+**University of Illinois at Urbana-Champaign**  
+MS in Technology Management • GPA: 3.89 • Aug 2025  
+_Coursework: Data Science, Big Data Infrastructure, Data Storytelling, Technology Strategy_
+
+**University of Mumbai**  
+Bachelor's in Mechanical Engineering • GPA: 3.75 • Jul 2022
+
+---
+
+## 🧠 Skills
+
+**Programming**: Python, Pandas, NumPy, Scikit-learn, TensorFlow, PySyft, Matplotlib, Seaborn, Kotlin  
+**Data Science**: EDA, Regression, Classification, Time-Series Analysis, Pipeline Automation  
+**ML/AI**: Federated Learning, LSTM, RLlib, Privacy Layers, Model Deployment  
+**Tools & APIs**: Flask, Yahoo Finance API, AlphaVantage API, Tableau, GitHub, Jupyter, Docker  
+**Systems**: Asyncio, FastAPI, Prompt Engineering, Vector Databases, Multi-Agent Architectures
+
+---
+
+## 💼 Experience
+
+**Senior Consultant – Data & Strategy**  
+FACES Consulting | Aug 2024 – Present | Champaign, IL  
+- Led AI product strategy for UIUC startups, improving system performance by 15%  
+- Built data-driven roadmaps and facilitated stakeholder workshops  
+- Optimized growth models and pipelines for ML-based platforms  
+
+**Operations Manager – Analytics**  
+Flora Pharmaceuticals | Nov 2023 – May 2024 | Mumbai, India  
+- Improved production efficiency by 10% via workflow streamlining  
+- Automated inventory tracking and compliance reporting  
+- Built dashboards to support executive resource decisions  
+
+**Product Management Intern – Process Analytics**  
+Scottish Chemical Industries | Sep 2022 – Mar 2023 | Mumbai, India  
+- Reduced downtime with optimized maintenance schedules  
+- Delivered process data reports that guided project decisions  
+
+---
+
+## 🚀 Projects
+
+**[Federated Healthcare Recommendation System](https://github.com/Nstar9/Federated-Healthcare-Recommendation-System)**  
+Built a privacy-first ML system with PySyft on 10K+ health records. Deployed secure APIs with 80% accuracy.
+
+**[AlphaForge ML Stock Predictor](https://github.com/Nstar9/AlphaForge-ML-Stock-Predictor)**  
+Used AlphaVantage API and ML to forecast stock returns with 72% test accuracy and 8% annualized profit.
+
+**[Customer Data & Time-Series Analysis](https://github.com/Nstar9/Customer-Data-Analysis)**  
+Cleaned 50K+ customer records and automated EDA pipeline to uncover 5+ seasonal trends.
+
+**[Stock Market Data Pipeline](https://github.com/Nstar9/Stock-Market-Data-Pipeline)**  
+Scheduled Yahoo Finance scraping, cleaning, and storage of 1K+ daily records with 99% reliability.
+
+**[Pairs Trading Quant Research](https://github.com/Nstar9/Pairs-Trading-Quant-Research)**  
+Identified mean-reverting pairs among S&P 500 tech stocks and achieved 12.5% annualized backtest returns.
+
+**[Market Making Strategy with RL](https://github.com/Nstar9/Market-Making-Strategy)**  
+Built LSTM-augmented order book simulation and trained RL agent for bid-ask spread optimization.
+
+---
+
