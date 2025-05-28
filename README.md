@@ -1,191 +1,231 @@
-# agentlab_v2
-
-This project demonstrates a multi-stage agent pipeline using the Google Agent Developer Kit (ADK). The pipeline:
-1. Brainstorms ideas
-2. Validates each idea in parallel
-3. Selects the best idea
-4. Iterates to improve quality
-5. Generates a final self-contained AI prompt
-
-## Prerequisites
-- Python 3.8+
-- git
-- An OpenAI API key (for the `LiteLlm` model)
-
-## Setup
-1. Clone this repository and navigate into it:
-   ```bash
-   git clone <repo-url>
-   cd <repo-directory>
-   ```
-2. Create and activate a virtual environment called `agent_venv`:
-   ```bash
-   python3 -m venv agent_venv
-   source agent_venv/bin/activate    # On Windows use: agent_venv\Scripts\activate
-   ```
-3. Upgrade pip (optional but recommended):
-   ```bash
-   pip install --upgrade pip
-   ```
-4. Install required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Configuration
-- Review and edit `agentlab_v2/config.yaml` to adjust parameters:
-  - `num_ideas`: Number of ideas to brainstorm per iteration
-  - `max_loops`: Number of refinement loops
-  - Other thresholds if needed
-- Set your OpenAI API key:
-  ```bash
-  export OPENAI_API_KEY="your_api_key_here"
-  ```
-
-## Running the Agent
-The ADK CLI provides both a web UI and a CLI runner.
-
-### Web UI
-```bash
-# Start the interactive web interface
-adk web
-```
-Open your browser at `http://localhost:8080` to interact with the pipeline.
-
-### Command-Line Run
-```bash
-# Run the agent pipeline in the terminal
-adk run
-```  
-
-## Troubleshooting
-- Ensure the virtual environment is activated when running commands.
-- Confirm `adk`, `python`, and `pip` point to the `agent_venv` binaries (`which adk`).
-- Install missing dependencies if you encounter import errors.
-
-## References
-- ADK documentation: https://github.com/google/agent-developer-kit
 # AgentLab
 
-A multi-agent framework for idea generation and product development using Google's Agent Development Kit (ADK) and generative AI models.
+A multi-agent framework for idea generation, validation, and product development using Google's Agent Development Kit (ADK) and generative AI models.
 
 ## Project Overview
 
-AgentLab is a framework that orchestrates multiple AI agents to collaborate on tasks like idea generation, validation, and product requirement documentation. The project has evolved through multiple versions (v1-v4), with each version adding new capabilities and refinements.
+AgentLab is a sophisticated framework that orchestrates multiple AI agents to collaborate on complex tasks including idea generation, validation, competitive analysis, and Product Requirements Document (PRD) creation. The system supports both web-based and command-line interfaces, with evolution through multiple versions (v1-v4) that incrementally add capabilities and refinements.
 
-## Features
+### Key Features
 
-- Multi-agent orchestration with human-in-the-loop interactions
-- Idea generation and validation
-- Product Requirements Document (PRD) creation
-- Prompt engineering for various applications
+- **Multi-agent orchestration** with specialized agents for different tasks
+- **Interactive web interface** using Google ADK's FastAPI integration
+- **Idea generation and validation** with competitive analysis
+- **Product Requirements Document (PRD)** creation
+- **Human-in-the-loop** interactions for decision making
+- **Containerized deployment** with Docker support
+
+## Architecture
+
+The framework consists of several specialized agents:
+
+- **IdeaCoachAgent**: Generates creative ideas based on user input
+- **ValidationAgent**: Validates ideas with market research and competitive analysis
+- **ProductManagerAgent**: Creates detailed Product Requirements Documents
+- **OrchestratorAgent**: Coordinates workflow between specialist agents
 
 ## Setup
 
-1. Clone the repository
-2. Create a virtual environment:
+### Prerequisites
+
+- Python 3.8+
+- Git
+- Docker (optional, for containerized deployment)
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repo-url>
+   cd AgentLab
    ```
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+2. **Create and activate a virtual environment**:
+   ```bash
+   python -m venv agent_venv
+   source agent_venv/bin/activate    # On Windows: agent_venv\Scripts\activate
    ```
-3. Install dependencies:
-   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install --upgrade pip
    pip install -r requirements.txt
    ```
-4. Set up environment variables:
-   - Copy `.env.template` to `.env`
-   - Add your API keys to the `.env` file:
-     ```
-     ANTHROPIC_API_KEY="your_anthropic_api_key_here"
-     SERPAPI_API_KEY="your_serpapi_api_key_here"
-     ```
-   - The Anthropic API key is required for accessing Claude models
-   - The SerpAPI key is used for competitor search functionality
+
+4. **Set up environment variables**:
+   Create a `.env` file in the project root and add your API keys:
+   ```env
+   ANTHROPIC_API_KEY="your_anthropic_api_key_here"
+   OPENAI_API_KEY="your_openai_api_key_here"
+   SERPAPI_API_KEY="your_serpapi_api_key_here"
+   ```
+   
+   **Required API Keys**:
+   - **Anthropic API**: Required for Claude models used in agents
+   - **OpenAI API**: Alternative LLM provider option
+   - **SerpAPI**: Used for competitive search and market research
 
 ## Usage
 
-To run the latest version (v4):
+### Web Interface (Recommended)
 
+Start the interactive web interface using the main FastAPI application:
+
+```bash
+python main.py
 ```
+
+Then open your browser at `http://localhost:80` to access the ADK web interface.
+
+### Command Line Interface
+
+You can also run individual agent versions directly:
+
+**Latest version (v4)**:
+```bash
 python agentlab_v4/agent.py
 ```
 
-When you run the script, it will:
+**Previous versions**:
+```bash
+python agentlab_v3/agent.py  # Includes competitor search
+python agentlab_v2/agent.py  # Enhanced multi-agent workflow  
+python agentlab_v1/agent.py  # Basic implementation
+```
 
-1. Prompt you for input on what kind of ideas to generate (e.g., "AI productivity tools")
-2. Generate several ideas based on your input
-3. Validate these ideas
-4. Present the ideas to you for selection
-5. Create a Product Requirements Document (PRD) for your selected idea
-6. Generate prompts that could be used to create apps based on your idea
-7. Display the final results, including the selected idea, PRD, and prompts
+### Using Google ADK CLI
+
+If you have the ADK CLI installed globally:
+
+```bash
+# Web interface
+adk web
+
+# Command line runner
+adk run
+```
 
 ### Interactive Workflow
 
-The workflow is designed to be interactive with human-in-the-loop decision making:
+The system provides an interactive experience:
 
-1. After ideas are generated, you'll be asked to select one or request regeneration
-2. After the PRD is created, you'll have the option to accept it or request changes
-3. The final output includes the selected idea, a detailed PRD, and prompts for app creation
-
-This interactive approach ensures that the final product aligns with your vision while leveraging AI for the heavy lifting of idea generation and documentation.
+1. **Input Phase**: Specify the type of ideas you want to generate
+2. **Generation**: AI generates multiple idea candidates
+3. **Validation**: Ideas are validated with market research and competitive analysis
+4. **Selection**: Choose from generated ideas or request regeneration
+5. **Documentation**: Create detailed PRDs for selected ideas
+6. **Refinement**: Iterate on PRDs with human feedback
+7. **Output**: Final deliverables including PRDs and implementation prompts
 
 ## Project Structure
 
-- `agentlab_v1/`: Initial implementation
-- `agentlab_v2/`: Enhanced version
-- `agentlab_v3/`: Added competitor search functionality
-- `agentlab_v4/`: Latest version with improved user interaction flow
-
-## Common Issues and Solutions
-
-### Pydantic Validation Error (Fixed)
-
-Previously, users might have encountered this error when running agent.py:
-
 ```
-ValueError: "UserSelectionAgent" object has no field "idea_generator"
-```
-
-This was caused by a Pydantic validation issue where the `UserSelectionAgent` class was trying to set attributes that weren't defined as fields in the Pydantic model.
-
-**Solution (Already Implemented):**
-
-This issue has been fixed in the current version by properly declaring the fields in the `UserSelectionAgent` class:
-
-```python
-class UserSelectionAgent(BaseAgent):
-    # --- Field Declarations for Pydantic ---
-    idea_generator: LlmAgent
-    validator: LlmAgent
-    product_manager: LlmAgent
-    prompt_engineer: LlmAgent
-    
-    # Allow arbitrary types since we're storing agent instances
-    model_config = {"arbitrary_types_allowed": True}
-    
-    # Rest of the class...
+AgentLab/
+├── main.py                 # FastAPI application entry point
+├── agents/                 # Modular agent implementations
+│   ├── idea_coach_agent.py
+│   ├── validation_agent.py
+│   ├── product_manager_agent.py
+│   ├── orchestrator_agent.py
+│   └── test_*.py          # Unit tests for agents
+├── agentlab_v1/           # Version 1: Basic implementation
+├── agentlab_v2/           # Version 2: Enhanced workflow
+├── agentlab_v3/           # Version 3: Added competitor search
+├── agentlab_v4/           # Version 4: Latest with improved UX
+├── requirements.txt       # Python dependencies
+├── Dockerfile            # Container configuration
+└── README.md            # This file
 ```
 
-And passing them correctly to the parent class constructor:
+## Configuration
 
-```python
-super().__init__(
-    name=name,
-    idea_generator=idea_generator,
-    validator=validator,
-    product_manager=product_manager,
-    prompt_engineer=prompt_engineer,
-    sub_agents=sub_agents_list,
-)
+Each agent version includes a `config.yaml` file for customization:
+
+- `num_ideas`: Number of ideas to generate per iteration
+- `max_loops`: Maximum refinement iterations
+- `validation_thresholds`: Criteria for idea validation
+- `model_settings`: LLM model configuration
+
+Example configuration:
+```yaml
+num_ideas: 5
+max_loops: 3
+validation_threshold: 0.7
+model_provider: "anthropic"
 ```
 
-## Dependencies
+## Docker Deployment
 
-All required dependencies are listed in requirements.txt, including:
+Build and run the containerized version:
 
-- google-adk: Google's Agent Development Kit
-- google-genai: Google's Generative AI library
-- pydantic: Data validation library
-- PyYAML: YAML parsing library
-- anthropic: Client for Claude AI models
+```bash
+# Build the Docker image
+docker build -t agentlab .
+
+# Run the container
+docker run -p 80:80 --env-file .env agentlab
+```
+
+## Development
+
+### Running Tests
+
+Execute the test suite:
+
+```bash
+python run_tests.py
+```
+
+Or run individual agent tests:
+
+```bash
+python agents/test_idea_coach.py
+python agents/test_validation_agent.py
+python agents/test_product_manager_agent.py
+```
+
+### Adding New Agents
+
+1. Create a new agent class inheriting from `BaseAgent`
+2. Implement required methods for your agent's functionality
+3. Add the agent to the orchestrator workflow
+4. Create corresponding unit tests
+
+## Troubleshooting
+
+### Common Issues
+
+**Import Errors**: Ensure virtual environment is activated and dependencies are installed:
+```bash
+which python  # Should point to agent_venv
+pip install -r requirements.txt
+```
+
+**API Key Issues**: Verify your `.env` file contains valid API keys and is in the project root.
+
+**Port Conflicts**: If port 80 is in use, modify the port in `main.py` or set the `PORT` environment variable.
+
+### Dependency Conflicts
+
+If you encounter dependency conflicts, try creating a fresh virtual environment:
+```bash
+rm -rf agent_venv
+python -m venv agent_venv
+source agent_venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes and add tests
+4. Ensure all tests pass: `python run_tests.py`
+5. Submit a pull request
+
+## References
+
+- [Google Agent Development Kit (ADK)](https://github.com/google/agent-developer-kit)
+- [Anthropic Claude API](https://docs.anthropic.com/)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Pydantic Documentation](https://docs.pydantic.dev/)
