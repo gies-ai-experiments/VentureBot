@@ -80,7 +80,7 @@ jobs:
             echo "--- Creating/Updating .env file on VM ---"
             echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
             echo "Project dir: $PROJECT_DIR"
-            vi .env
+            # vi .env
             echo "--- Verifying Dockerfile exists ---"
             if [ ! -f Dockerfile ]; then
                 echo "Dockerfile not found in $PROJECT_DIR after git operations! Listing files:"
