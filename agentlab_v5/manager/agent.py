@@ -19,7 +19,7 @@ except Exception as e:
 # Get API key from environment variable (works in both local and production)
 api_key = os.getenv("ANTHROPIC_API_KEY")
 if not api_key:
-    raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
+    print("ANTHROPIC_API_KEY environment variable is not set")
 
 # Get the directory of the current file and load config
 current_dir = os.path.dirname(os.path.abspath(__file__))
