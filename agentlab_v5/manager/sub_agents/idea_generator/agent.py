@@ -10,7 +10,7 @@ from ...tools.tools import claude_web_search
 # Get the directory of the current file
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # Navigate up to the manager directory and get config.yaml
-config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(current_dir))), "manager", "config.yaml")
+config_path = os.path.join(os.path.dirname(os.path.dirname(current_dir)), "config.yaml")
 cfg = yaml.safe_load(open(config_path))
 # Create Anthropic client
 anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))

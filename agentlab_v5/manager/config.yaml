@@ -1,5 +1,4 @@
-model: anthropic/claude-3-7-sonnet-latest
+model: "claude-3-7-sonnet-20250219"
 num_ideas: 5
-min_score: 0.3
-max_loops: 2
-type: "web_search_user_input_20240519"
+max_loops: 3
+validation_threshold: 0.7 

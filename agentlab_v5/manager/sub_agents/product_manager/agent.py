@@ -14,7 +14,7 @@ load_dotenv(dotenv_path)  # loads ANTHROPIC_API_KEY from .env
 # Get the directory of the current file
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # Navigate up to the manager directory and get config.yaml
-config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(current_dir))), "manager", "config.yaml")
+config_path = os.path.join(os.path.dirname(os.path.dirname(current_dir)), "config.yaml")
 cfg = yaml.safe_load(open(config_path))
 
 # Create Anthropic client
