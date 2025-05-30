@@ -59,9 +59,9 @@ jobs:
 
             echo "--- Creating/Updating .env file on VM ---"
             echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
-            echo "${{ secrets.ENV }}"
+            echo "Project dir: $PROJECT_DIR"
             ls -alrt
-            head .env
+            vi .env
             # Get the branch name from GitHub context
             CURRENT_BRANCH="${{ github.ref_name }}"
             echo "--- Preparing to deploy branch: $CURRENT_BRANCH ---"
