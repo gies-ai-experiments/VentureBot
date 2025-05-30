@@ -96,6 +96,7 @@ jobs:
             docker rm "$CONTAINER_NAME" || true   # Ignore error if container doesn't exist
 
             echo "--- Starting new container: $CONTAINER_NAME ---"
+            vi .env
             docker run -d -p 80:80 --env-file .env --name "$CONTAINER_NAME" "$IMAGE_NAME"
 
             echo "--- Verifying container startup for $CONTAINER_NAME ---"
