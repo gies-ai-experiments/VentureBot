@@ -56,3 +56,6 @@ root_agent = Agent(
     """,
     description="An agent that manages the complete workflow by generating ideas and then defining a plan and the finally producing a prompt based on user input"
 )
+
+# Export the agent for ADK
+__all__ = ["root_agent"]

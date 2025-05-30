@@ -4,7 +4,7 @@ A multi-agent framework for idea generation, validation, and product development
 
 ## Project Overview
 
-AgentLab is a sophisticated framework that orchestrates multiple AI agents to collaborate on complex tasks including idea generation, validation, competitive analysis, and Product Requirements Document (PRD) creation. The system supports both web-based and command-line interfaces, with evolution through multiple versions (v1-v4) that incrementally add capabilities and refinements.
+AgentLab is a sophisticated framework that orchestrates multiple AI agents to collaborate on complex tasks including idea generation, validation, competitive analysis, and Product Requirements Document (PRD) creation. The system supports both web-based and command-line interfaces.
 
 ### Key Features
 
@@ -85,50 +85,27 @@ adk web
    - **OpenAI API**: Alternative LLM provider option
    - **SerpAPI**: Used for competitive search and market research
 
-## Usage
+### Using ADK Web Interface (Recommended)
 
-### Web Interface (Recommended)
+1. Navigate to the agentlab_v5 directory:
+   ```bash
+   cd agentlab_v5
+   ```
 
-Start the interactive web interface using the main FastAPI application:
+2. Start the ADK web interface:
+   ```bash
+   adk web
+   ```
 
-```bash
-python main.py
-```
+3. Open your browser at `http://localhost:8080` to access the web interface.
 
-Then open your browser at `http://localhost:80` to access the ADK web interface.
+### Using Uvicorn Directly
 
-### Command Line Interface
-
-You can also run individual agent versions directly:
-
-**Latest version (v5)**:
-```bash
-python agentlab_v5/agent.py
-```
-
-**Previous versions**:
-```bash
-python agentlab_v4/agent.py  # Includes ux fixes
-python agentlab_v3/agent.py  # Includes competitor search
-python agentlab_v2/agent.py  # Enhanced multi-agent workflow  
-python agentlab_v1/agent.py  # Basic implementation
-```
-
-### Using Google ADK CLI
-
-If you have the ADK CLI installed globally:
+If you prefer to run with uvicorn directly:
 
 ```bash
-# Navigate to the agentlab_v5 directory
 cd agentlab_v5
-
-# Run the agent pipeline in the terminal in the agentlab_v5 directory
-=======
-# Web interface
-adk web
-
-# Command line runner
-adk run
+uvicorn manager.app:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 ### Interactive Workflow
@@ -147,33 +124,21 @@ The system provides an interactive experience:
 
 ```
 AgentLab/
-├── main.py                 # FastAPI application entry point
-├── agents/                 # Modular agent implementations
-│   ├── idea_coach_agent.py
-│   ├── validation_agent.py
-│   ├── product_manager_agent.py
-│   ├── orchestrator_agent.py
-│   └── test_*.py          # Unit tests for agents
-├── agentlab_v1/           # Version 1: Basic implementation
-├── agentlab_v2/           # Version 2: Enhanced workflow
-├── agentlab_v3/           # Version 3: Added competitor search
-├── agentlab_v4/           # Version 4: Latest with improved UX
-├── agentlab_v5/           # Version 5: Fixed agent orchestration issue
-├── requirements.txt       # Python dependencies
-├── Dockerfile            # Container configuration
-└── README.md            # This file
+├── agentlab_v5/           # Latest implementation
+│   ├── manager/          # Main application directory
+│   │   ├── app.py       # FastAPI application
+│   │   ├── agent.py     # Root agent implementation
+│   │   └── sub_agents/  # Specialized agent implementations
+│   └── config.yaml      # Configuration file
+├── requirements.txt      # Python dependencies
+├── Dockerfile           # Container configuration
+└── README.md           # This file
 ```
 
 ## Configuration
 
-Each agent version includes a `config.yaml` file for customization:
+The `config.yaml` file in agentlab_v5 directory can be customized:
 
-- `num_ideas`: Number of ideas to generate per iteration
-- `max_loops`: Maximum refinement iterations
-- `validation_thresholds`: Criteria for idea validation
-- `model_settings`: LLM model configuration
-
-Example configuration:
 ```yaml
 num_ideas: 5
 max_loops: 3
@@ -219,10 +184,6 @@ python agents/test_product_manager_agent.py
 4. Create corresponding unit tests
 
 ## Troubleshooting
-- Ensure the virtual environment is activated when running commands.
-- Confirm `adk`, `python`, and `pip` point to the `agent_venv` binaries (`which adk`).
-- Install missing dependencies if you encounter import errors.
-- Make sure you're in the `agentlab_v5` directory when running the agent.
 
 ### Common Issues
 
@@ -234,7 +195,10 @@ pip install -r requirements.txt
 
 **API Key Issues**: Verify your `.env` file contains valid API keys and is in the project root.
 
-**Port Conflicts**: If port 80 is in use, modify the port in `main.py` or set the `PORT` environment variable.
+**Port Conflicts**: If port 8080 is in use, you can specify a different port:
+```bash
+adk web --port 8081
+```
 
 ### Dependency Conflicts
 
