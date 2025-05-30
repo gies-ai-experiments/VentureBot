@@ -61,7 +61,7 @@ jobs:
             echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
 
             ls -alrt
-            cat .env
+            head .env
             # Get the branch name from GitHub context
             CURRENT_BRANCH="${{ github.ref_name }}"
             echo "--- Preparing to deploy branch: $CURRENT_BRANCH ---"
