@@ -57,9 +57,6 @@ jobs:
               fi
             fi
 
-            echo "--- Creating/Updating .env file on VM ---"
-            echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
-
             # Get the branch name from GitHub context
             CURRENT_BRANCH="${{ github.ref_name }}"
             echo "--- Preparing to deploy branch: $CURRENT_BRANCH ---"
@@ -78,7 +75,11 @@ jobs:
             # Optional: Clean up untracked files that might interfere (use with caution)
             # echo "Cleaning workspace..."
             # git clean -fdx
-
+            ls -alrt
+            echo "--- Creating/Updating .env file on VM ---"
+            echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
+            echo "Project dir: $PROJECT_DIR"
+            # vi .env
             echo "--- Verifying Dockerfile exists ---"
             if [ ! -f Dockerfile ]; then
                 echo "Dockerfile not found in $PROJECT_DIR after git operations! Listing files:"
@@ -95,6 +96,7 @@ jobs:
             docker rm "$CONTAINER_NAME" || true   # Ignore error if container doesn't exist
 
             echo "--- Starting new container: $CONTAINER_NAME ---"
+            
             docker run -d -p 80:80 --env-file .env --name "$CONTAINER_NAME" "$IMAGE_NAME"
 
             echo "--- Verifying container startup for $CONTAINER_NAME ---"

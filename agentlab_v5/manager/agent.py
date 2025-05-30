@@ -9,15 +9,19 @@ from .sub_agents.prompt_engineer.agent import prompt_engineer
 from .sub_agents.idea_generator.agent import idea_generator
 from .sub_agents.validator_agent.agent import validator_agent
 
-# Try to load from .env file first (local development)
-try:
-    dotenv_path = os.path.join(os.getcwd(), ".env")
-    load_dotenv(dotenv_path)
-except Exception as e:
-    print(f"Note: .env file not found or error loading it: {e}")
-
-# Get API key from environment variable (works in both local and production)
+# First check environment variables (prioritize --env-file in Docker)
 api_key = os.getenv("ANTHROPIC_API_KEY")
+
+# Only try to load from .env if environment variable is not set
+if not api_key:
+    try:
+        dotenv_path = os.path.join(os.getcwd(), ".env")
+        load_dotenv(dotenv_path)
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+    except Exception as e:
+        print(f"Note: .env file not found or error loading it: {e}")
+
+# Verify API key is available
 if not api_key:
     raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
 

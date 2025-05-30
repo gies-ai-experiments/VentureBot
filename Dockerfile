@@ -22,9 +22,6 @@ COPY . /app/
 # Install any needed packages specified in the root requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Change to the agentlab_v5 directory
-WORKDIR /app/agentlab_v5
-
 # Make port 80 available to the world outside this container
 EXPOSE 80
 
@@ -34,5 +31,5 @@ EXPOSE 80
 # ENV GOOGLE_CLOUD_LOCATION="your-gcp-location"
 # ENV GOOGLE_GENAI_USE_VERTEXAI="True" # If using Vertex AI
 
-# Run the FastAPI application using Uvicorn
-CMD ["uvicorn", "manager.app:app", "--host", "0.0.0.0", "--port", "80"] 
+# Run the FastAPI application using Uvicorn from the agentlab_v5 directory
+CMD ["sh", "-c", "cd /app/agentlab_v5 && uvicorn manager.app:app --host 0.0.0.0 --port 80"] 
