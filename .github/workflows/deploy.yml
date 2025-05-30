@@ -57,9 +57,6 @@ jobs:
               fi
             fi
 
-            echo "--- Creating/Updating .env file on VM ---"
-            echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
-            echo "Project dir: $PROJECT_DIR"
             ls -alrt
             # Get the branch name from GitHub context
             CURRENT_BRANCH="${{ github.ref_name }}"
@@ -96,6 +93,10 @@ jobs:
             docker rm "$CONTAINER_NAME" || true   # Ignore error if container doesn't exist
 
             echo "--- Starting new container: $CONTAINER_NAME ---"
+            
+            echo "--- Creating/Updating .env file on VM ---"
+            echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
+            echo "Project dir: $PROJECT_DIR"
             vi .env
             docker run -d -p 80:80 --env-file .env --name "$CONTAINER_NAME" "$IMAGE_NAME"
 
