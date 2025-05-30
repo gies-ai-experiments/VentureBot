@@ -59,7 +59,7 @@ jobs:
 
             echo "--- Creating/Updating .env file on VM ---"
             echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
-
+            echo "${{ secrets.ENV }}"
             ls -alrt
             head .env
             # Get the branch name from GitHub context
