@@ -1,4 +1,4 @@
-# agentlab_v2
+# AgentLab
 
 This project demonstrates a multi-stage agent pipeline using the Google Agent Developer Kit (ADK). The pipeline:
 1. Brainstorms ideas
@@ -33,7 +33,7 @@ This project demonstrates a multi-stage agent pipeline using the Google Agent De
    ```
 
 ## Configuration
-- Review and edit `agentlab_v2/config.yaml` to adjust parameters:
+- Review and edit `agentlab_v5/manager/config.yaml` to adjust parameters:
   - `num_ideas`: Number of ideas to brainstorm per iteration
   - `max_loops`: Number of refinement loops
   - Other thresholds if needed
@@ -47,6 +47,9 @@ The ADK CLI provides both a web UI and a CLI runner.
 
 ### Web UI
 ```bash
+# Navigate to the agentlab_v5 directory
+cd agentlab_v5
+
 # Start the interactive web interface
 adk web
 ```
@@ -54,6 +57,9 @@ Open your browser at `http://localhost:8080` to interact with the pipeline.
 
 ### Command-Line Run
 ```bash
+# Navigate to the agentlab_v5 directory
+cd agentlab_v5
+
 # Run the agent pipeline in the terminal
 adk run
 ```  
@@ -62,6 +68,7 @@ adk run
 - Ensure the virtual environment is activated when running commands.
 - Confirm `adk`, `python`, and `pip` point to the `agent_venv` binaries (`which adk`).
 - Install missing dependencies if you encounter import errors.
+- Make sure you're in the `agentlab_v5` directory when running the agent.
 
 ## References
 - ADK documentation: https://github.com/google/agent-developer-kit
