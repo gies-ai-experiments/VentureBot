@@ -9,9 +9,17 @@ from .sub_agents.prompt_engineer.agent import prompt_engineer
 from .sub_agents.idea_generator.agent import idea_generator
 from .sub_agents.validator_agent.agent import validator_agent
 
-# Load environment and config
-dotenv_path = os.path.join(os.getcwd(), ".env")
-load_dotenv(dotenv_path)  # loads ANTHROPIC_API_KEY from .env
+# Try to load from .env file first (local development)
+try:
+    dotenv_path = os.path.join(os.getcwd(), ".env")
+    load_dotenv(dotenv_path)
+except Exception as e:
+    print(f"Note: .env file not found or error loading it: {e}")
+
+# Get API key from environment variable (works in both local and production)
+api_key = os.getenv("ANTHROPIC_API_KEY")
+if not api_key:
+    raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
 
 # Get the directory of the current file and load config
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +27,7 @@ config_path = os.path.join(current_dir, "config.yaml")
 cfg = yaml.safe_load(open(config_path))
 
 # Create Anthropic client
-anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+anthropic_client = anthropic.Anthropic(api_key=api_key)
 
 '''
 idea_creator_and_validator = SequentialAgent(
@@ -37,7 +45,6 @@ ideator = LoopAgent(
     It waits for user input after each agent response and continues to next agent only if user approves the idea"""
 )
 '''
-
 
 root_agent = Agent(
     name="manager",
