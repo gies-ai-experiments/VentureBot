@@ -1,5 +1,10 @@
 import anthropic
+import logging
 from typing import Dict, Any, List
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
 # Define web search tool for Claude
 web_search_tool = {
     "name": "search_internet",
@@ -28,7 +33,7 @@ def claude_web_search(query: str, anthropic_client: anthropic.Anthropic) -> Dict
         Dict[str, Any]: Search results with title and content
     """
     try:
-        print.info(f"Performing web search for query: {query}")
+        logger.info(f"Performing web search for query: {query}")
         # Initial message with the search query
         message = anthropic_client.messages.create(
             model="claude-3-7-sonnet-20250219", 
@@ -50,7 +55,7 @@ def claude_web_search(query: str, anthropic_client: anthropic.Anthropic) -> Dict
                 tool_params = tool_use.input
                 tool_id = tool_use.id
                 
-                print.debug(f"Tool use detected: {tool_name} with params: {tool_params}")
+                logger.debug(f"Tool use detected: {tool_name} with params: {tool_params}")
                 
                 # Continue the conversation to get search results
                 search_response = anthropic_client.messages.create(
@@ -95,34 +100,34 @@ def claude_web_search(query: str, anthropic_client: anthropic.Anthropic) -> Dict
                     if getattr(content, 'type', None) == "text":
                         results.append({"title": f"Result {i+1}", "content": content.text, "position": i+1})
                 
-                print.info(f"Found {len(results)} search results")
+                logger.info(f"Found {len(results)} search results")
                 return {"results": results}
         
         # Handle direct response (no tool use)
         text_content = next((c for c in message.content if getattr(c, 'type', None) == 'text'), None)
         if text_content:
-            print.info("Received direct response without tool use")
+            logger.info("Received direct response without tool use")
             return {"results": [{"title": "Direct Response", "content": text_content.text, "position": 1}]}
         
         return {"results": []}
     
     except Exception as e:
-        print.error(f"Error in claude_web_search: {str(e)}", exc_info=True)
+        logger.error(f"Error in claude_web_search: {str(e)}", exc_info=True)
         return {"results": []}
 
 def validate_user_input(user_input: Dict) -> bool:
-       """Validate that all required fields are present in user input"""
-       required_fields = ["name", "interests", "hobbies"]
-       return all(field in user_input for field in required_fields)
-   
-   def format_user_profile(user_input: Dict) -> str:
-       """Format user profile for use by other agents"""
-       return f"""
-       User Profile:
-       Name: {user_input.get('name')}
-       Interests: {user_input.get('interests')}
-       Hobbies: {user_input.get('hobbies')}
-       Favorite Activities: {user_input.get('favorite_activities')}
-       """
+    """Validate that all required fields are present in user input"""
+    required_fields = ["name", "interests", "hobbies"]
+    return all(field in user_input for field in required_fields)
+
+def format_user_profile(user_input: Dict) -> str:
+    """Format user profile for use by other agents"""
+    return f"""
+    User Profile:
+    Name: {user_input.get('name')}
+    Interests: {user_input.get('interests')}
+    Hobbies: {user_input.get('hobbies')}
+    Favorite Activities: {user_input.get('favorite_activities')}
+    """
        
        

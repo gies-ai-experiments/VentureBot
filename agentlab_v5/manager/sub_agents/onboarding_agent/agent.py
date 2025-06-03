@@ -4,7 +4,6 @@ import anthropic
 from dotenv import load_dotenv
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.agents import Agent
-from google.adk.memory import Memory
 from google.adk.memory.types import MemoryType
 import logging
 from ...tools.tools import claude_web_search
@@ -14,16 +13,21 @@ import asyncio
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('onboarding.log'),
-        logging.StreamHandler()
-    ]
-)
+def setup_logging():
+    """Configure logging"""
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler('onboarding.log'),
+                logging.StreamHandler()
+            ]
+        )
+    return logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
+logger = setup_logging()
+
 dotenv_path = os.path.join(os.getcwd(), ".env")
 load_dotenv(dotenv_path)  # loads ANTHROPIC_API_KEY from .env
 # Get the directory of the current file
@@ -35,25 +39,6 @@ cfg = yaml.safe_load(open(config_path))
 # Create Anthropic client
 anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-def check_onboarding_status(self, session_id):
-    """Check if user has completed onboarding"""
-    try:
-        with open(f'user_sessions/{session_id}.json', 'r') as f:
-            data = json.load(f)
-            return data.get('onboarding_complete', False)
-    except FileNotFoundError:
-        return False
-
-def save_session_data(self, session_id, user_data):
-    """Save user session data"""
-    os.makedirs('user_sessions', exist_ok=True)
-    with open(f'user_sessions/{session_id}.json', 'w') as f:
-        json.dump({
-            'onboarding_complete': True,
-            'user_data': user_data,
-            'timestamp': datetime.now().isoformat()
-        }, f)
-
 class OnboardingAgent(Agent):
     """
     Onboarding agent that collects user information and preferences.
@@ -61,8 +46,31 @@ class OnboardingAgent(Agent):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.TIMEOUT = 300  # 5 minutes timeout for responses
-        self.MAX_RETRIES = 3  # Maximum number of retries for failed questions
+        self.TIMEOUT = 300
+        self.MAX_RETRIES = 3
+
+    def check_onboarding_status(self, session_id):
+        """Check if user has completed onboarding"""
+        try:
+            with open(f'user_sessions/{session_id}.json', 'r') as f:
+                data = json.load(f)
+                return data.get('onboarding_complete', False)
+        except FileNotFoundError:
+            return False
+
+    def save_session_data(self, session_id, user_data):
+        """Save user session data"""
+        try:
+            os.makedirs('user_sessions', exist_ok=True)
+            with open(f'user_sessions/{session_id}.json', 'w') as f:
+                json.dump({
+                    'onboarding_complete': True,
+                    'user_data': user_data,
+                    'timestamp': datetime.now().isoformat()
+                }, f)
+        except Exception as e:
+            logger.error(f"Error saving session data: {str(e)}")
+            raise
 
     async def handle_optional_question(self, conversation, question: str) -> str:
         """Handle optional questions with skip option and timeout"""
@@ -98,9 +106,23 @@ class OnboardingAgent(Agent):
 
     async def handle(self, conversation, memory):
         try:
+            # Get session ID
+            session_id = conversation.session_id
+            if not session_id:
+                logger.error("No session ID provided")
+                raise ValueError("Session ID is required")
+
+            # Check if already onboarded
+            if self.check_onboarding_status(session_id):
+                logger.info(f"User {session_id} already completed onboarding")
+                stored_data = self.get_stored_user_data(session_id)
+                # Update memory with stored data
+                self._update_memory(memory, stored_data)
+                return stored_data
+
             # Initialize memory if not exists
-            if not isinstance(memory, Memory):
-                memory = Memory()
+            if not isinstance(memory, dict):
+                memory = {}
             
             logger.info("Starting onboarding process")
             
@@ -135,35 +157,69 @@ class OnboardingAgent(Agent):
             )
             logger.info(f"User's favorite activities: {user_favorite_activities}")
             
-            # Store user data with proper memory types
-            memory.add(
-                content=f"User's name: {user_name}",
-                memory_type=MemoryType.USER_PROFILE
-            )
-            memory.add(
-                content=f"User's interests: {user_interests}",
-                memory_type=MemoryType.USER_PREFERENCES
-            )
-            memory.add(
-                content=f"User's hobbies: {user_hobbies}",
-                memory_type=MemoryType.USER_PREFERENCES
-            )
-            memory.add(
-                content=f"User's favorite activities: {user_favorite_activities}",
-                memory_type=MemoryType.USER_PREFERENCES
-            )
-            
-            # Return the information to the manager agent
-            return {
+            # Create user data dictionary
+            user_data = {
                 "user_name": user_name,
                 "user_interests": user_interests,
                 "user_hobbies": user_hobbies,
                 "user_favorite_activities": user_favorite_activities
             }
             
+            # Update memory with user data
+            self._update_memory(memory, user_data)
+            
+            # Save session data
+            self.save_session_data(session_id, user_data)
+            
+            return user_data
+            
         except Exception as e:
             logger.error(f"Error in onboarding process: {str(e)}")
             await conversation.send_message("I encountered an error. Let's start over.")
+            raise
+
+    def get_stored_user_data(self, session_id):
+        """Retrieve stored user data"""
+        try:
+            with open(f'user_sessions/{session_id}.json', 'r') as f:
+                data = json.load(f)
+                return data.get('user_data', {})
+        except FileNotFoundError:
+            logger.error(f"No stored data found for session {session_id}")
+            return {}
+
+    def validate_memory_type(self, memory_type):
+        """Validate memory type"""
+        valid_types = [MemoryType.USER_PROFILE, MemoryType.USER_PREFERENCES]
+        if memory_type not in valid_types:
+            raise ValueError(f"Invalid memory type: {memory_type}")
+
+    def cleanup_old_sessions(self, max_age_days=30):
+        """Clean up old session files"""
+        try:
+            current_time = datetime.now()
+            for filename in os.listdir('user_sessions'):
+                if filename.endswith('.json'):
+                    filepath = os.path.join('user_sessions', filename)
+                    file_time = datetime.fromtimestamp(os.path.getmtime(filepath))
+                    if (current_time - file_time).days > max_age_days:
+                        os.remove(filepath)
+                        logger.info(f"Cleaned up old session file: {filename}")
+        except Exception as e:
+            logger.error(f"Error cleaning up old sessions: {str(e)}")
+
+    def _update_memory(self, memory, user_data: Dict[str, Any]):
+        """Update memory with user data"""
+        try:
+            # Add new user data directly to memory dictionary
+            memory[MemoryType.USER_PROFILE] = f"User's name: {user_data['user_name']}"
+            memory[MemoryType.USER_PREFERENCES] = {
+                "interests": user_data['user_interests'],
+                "hobbies": user_data['user_hobbies'],
+                "favorite_activities": user_data['user_favorite_activities']
+            }
+        except Exception as e:
+            logger.error(f"Error updating memory: {str(e)}")
             raise
 
 onboarding_agent = OnboardingAgent(

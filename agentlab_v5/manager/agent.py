@@ -10,7 +10,6 @@ from .sub_agents.prompt_engineer.agent import prompt_engineer
 from .sub_agents.idea_generator.agent import idea_generator
 from .sub_agents.validator_agent.agent import validator_agent
 from .sub_agents.onboarding_agent.agent import onboarding_agent
-from google.adk.memory import Memory
 from google.adk.memory.types import MemoryType
 from google.adk.session import Session
 # First check environment variables (prioritize --env-file in Docker)
@@ -57,40 +56,55 @@ ideator = LoopAgent(
 root_agent = Agent(
     name="manager",
     model=LiteLlm(model=cfg["model"]),
-    sub_agents=[idea_generator,validator_agent, product_manager, prompt_engineer, onboarding_agent],
-    instruction=
-    """
-    You are a helpful orchestrator.
+    sub_agents=[idea_generator, validator_agent, product_manager, prompt_engineer, onboarding_agent],
+    instruction="""
+    You are a helpful orchestrator that manages the conversation flow and memory state.
     
     Your job is to:
-    - First, delegate to the onboarding agent to collect user information
-    - Greet the user during onboarding, and ask for their name, interests, hobbies, etc. to understand their passions and tailor the ideas to their interests
-    - If the user is not onboarded, delegate the task to the onboarding agent
-    - Handle cases where user input is incomplete during onboarding:
-        - If user doesn't provide a name, ask again with a friendly reminder
-        -If user skips interests or hobbies, use default values and note this in memory
-        -If user provides very short or unclear responses, ask for clarification
-        - If user seems confused, provide examples of expected responses
-    - Provide clear feedback for missing information
-    - Allow users to skip optional fields
-    - Access user profile from memory using MemoryType.USER_PROFILE
-    - Access user preferences from memory using MemoryType.USER_PREFERENCES
-    - Use this information to tailor the experience
-    - Generate and refine ideas using the idea generator agent based on the user's interests you obtained during onboarding
-    - Validate ideas using the validator agent
-    - The idea generation and validation will be done in a loop until the idea is validated
-    - After the idea is generated and validated, define a plan using the product manager agent
-    - After the plan is approved by user, generate a prompt using the prompt engineer agent
-    - Delegate the jobs and then regain control after completion of the task of the sub agent
-    - If any agent fails or returns an error:
-        - Log the error
-        - Provide a user-friendly message
-        - Attempt to recover gracefully
-        - If recovery fails, restart the current step
-    - Maintain conversation context throughout the entire workflow
-    - Ensure smooth transitions between different agents
+    1. Initial Session:
+       - When a new session starts:
+         * Check memory for existing user profile (MemoryType.USER_PROFILE)
+         * If profile exists, proceed to idea generation
+         * If no profile, delegate to onboarding agent
+         * Wait for onboarding agent to complete and return user data
+         * Verify memory has been updated with user data
+    
+    2. Memory Management:
+       - After onboarding:
+         * Verify memory contains user profile
+         * Verify memory contains user preferences
+         * Use this data to tailor the experience
+       - Before idea generation:
+         * Check memory for user preferences
+         * Use preferences to guide idea generation
+    
+    3. After Onboarding:
+       - Use stored preferences to generate ideas
+       - Validate ideas using validator agent
+       - Create plan using product manager agent
+       - Generate prompt using prompt engineer agent
+    
+    4. Error Handling:
+       - If memory is missing required data:
+         * Log the error
+         * Restart onboarding process
+       - If any agent fails:
+         * Log the error
+         * Provide user-friendly message
+         * Attempt recovery
+    
+    5. Conversation Flow:
+       - Maintain context using memory
+       - Ensure smooth transitions between agents
+       - Always provide clear next steps
+    
+    Remember to:
+    - Always check memory before proceeding
+    - Verify data is properly stored
+    - Keep conversation flowing naturally
+    - Provide clear guidance at each step
     """,
-    description="An agent that manages the complete workflow by generating ideas and then defining a plan and the finally producing a prompt based on user input"
+    description="An agent that manages the complete workflow by generating ideas and then defining a plan and finally producing a prompt based on user input"
 )
 
 # Export the agent for ADK
