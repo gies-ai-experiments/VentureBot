@@ -89,7 +89,7 @@ validator_agent = ClaudeWebSearchValidator(
        ]
     
     5. Requirements:
-       - Use serpapi_search(idea) for each idea
+       - Use claude_web_search for each idea
        - Calculate scores using specified formulas
        - Include detailed notes for each idea
        - Maintain proper JSON formatting
