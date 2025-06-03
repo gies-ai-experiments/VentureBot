@@ -1,5 +1,5 @@
 import anthropic
-from typing import Dict, Any
+from typing import Dict, Any, List
 # Define web search tool for Claude
 web_search_tool = {
     "name": "search_internet",
@@ -109,3 +109,20 @@ def claude_web_search(query: str, anthropic_client: anthropic.Anthropic) -> Dict
     except Exception as e:
         print.error(f"Error in claude_web_search: {str(e)}", exc_info=True)
         return {"results": []}
+
+def validate_user_input(user_input: Dict) -> bool:
+       """Validate that all required fields are present in user input"""
+       required_fields = ["name", "interests", "hobbies"]
+       return all(field in user_input for field in required_fields)
+   
+   def format_user_profile(user_input: Dict) -> str:
+       """Format user profile for use by other agents"""
+       return f"""
+       User Profile:
+       Name: {user_input.get('name')}
+       Interests: {user_input.get('interests')}
+       Hobbies: {user_input.get('hobbies')}
+       Favorite Activities: {user_input.get('favorite_activities')}
+       """
+       
+       

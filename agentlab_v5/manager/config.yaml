@@ -2,3 +2,6 @@ model: "claude-3-7-sonnet-20250219"
 num_ideas: 5
 max_loops: 3
 validation_threshold: 0.7 
+# Add to config.yaml
+persistence:
+  user_profiles: "user_profiles.json"
