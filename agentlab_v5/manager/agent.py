@@ -10,8 +10,7 @@ from .sub_agents.prompt_engineer.agent import prompt_engineer
 from .sub_agents.idea_generator.agent import idea_generator
 from .sub_agents.validator_agent.agent import validator_agent
 from .sub_agents.onboarding_agent.agent import onboarding_agent
-from google.adk.memory.types import MemoryType
-from google.adk.session import Session
+
 # First check environment variables (prioritize --env-file in Docker)
 api_key = os.getenv("ANTHROPIC_API_KEY")
 
@@ -58,49 +57,32 @@ root_agent = Agent(
     model=LiteLlm(model=cfg["model"]),
     sub_agents=[idea_generator, validator_agent, product_manager, prompt_engineer, onboarding_agent],
     instruction="""
-    You are a helpful orchestrator that manages the conversation flow and memory state.
+    You are a helpful orchestrator that manages the conversation flow.
     
     Your job is to:
     1. Initial Session:
        - When a new session starts:
-         * Check memory for existing user profile (MemoryType.USER_PROFILE)
-         * If profile exists, proceed to idea generation
-         * If no profile, delegate to onboarding agent
-         * Wait for onboarding agent to complete and return user data
-         * Verify memory has been updated with user data
+         * Delegate to onboarding agent to collect user information
+         * Wait for onboarding agent to complete
+         * Pass the collected data to the idea generator
     
-    2. Memory Management:
-       - After onboarding:
-         * Verify memory contains user profile
-         * Verify memory contains user preferences
-         * Use this data to tailor the experience
-       - Before idea generation:
-         * Check memory for user preferences
-         * Use preferences to guide idea generation
-    
-    3. After Onboarding:
-       - Use stored preferences to generate ideas
+    2. After Onboarding:
+       - Use the collected user data to generate ideas
        - Validate ideas using validator agent
        - Create plan using product manager agent
        - Generate prompt using prompt engineer agent
     
-    4. Error Handling:
-       - If memory is missing required data:
-         * Log the error
-         * Restart onboarding process
+    3. Error Handling:
        - If any agent fails:
          * Log the error
          * Provide user-friendly message
          * Attempt recovery
     
-    5. Conversation Flow:
-       - Maintain context using memory
+    4. Conversation Flow:
        - Ensure smooth transitions between agents
        - Always provide clear next steps
     
     Remember to:
-    - Always check memory before proceeding
-    - Verify data is properly stored
     - Keep conversation flowing naturally
     - Provide clear guidance at each step
     """,
