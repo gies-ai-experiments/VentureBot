@@ -15,3 +15,4 @@ uvicorn==0.34.2
 starlette==0.46.2
 aiofiles==23.2.1  # For async file operations
 python-json-logger==2.0.7  # For structured logging
+deprecated==1.2.14  # Required dependency
