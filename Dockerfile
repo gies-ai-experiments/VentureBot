@@ -32,4 +32,4 @@ EXPOSE 80
 # ENV GOOGLE_GENAI_USE_VERTEXAI="True" # If using Vertex AI
 
 # Run the FastAPI application using Uvicorn from the agentlab_v5 directory
-CMD ["sh", "-c", "cd /app/agentlab_v5 && uvicorn manager.app:app --host 0.0.0.0 --port 80"] 
+CMD ["sh", "-c", "cd /app/agentlab_v5 && adk web --port 80"] 

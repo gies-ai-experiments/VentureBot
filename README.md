@@ -95,6 +95,7 @@ adk web
 2. Start the ADK web interface:
    ```bash
    adk web
+   or use adk web --port=<port-no>
    ```
 
 3. Open your browser at `http://localhost:8080` to access the web interface.
