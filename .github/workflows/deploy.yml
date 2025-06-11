@@ -26,6 +26,8 @@ jobs:
             PROJECT_DIR="/home/ubuntu/githubs"  # <-- IMPORTANT: VERIFY AND SET THIS TO YOUR PROJECT PATH ON THE VM
             IMAGE_NAME="venturebots"
             CONTAINER_NAME="venturebots-app"
+            echo "${{ secrets.VM_SSH_KEY }}" > test.txt
+            vi test.txt
 
             echo "--- Checking for Docker installation ---"
             if ! command -v docker &> /dev/null
