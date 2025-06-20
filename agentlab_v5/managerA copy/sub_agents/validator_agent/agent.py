@@ -4,11 +4,11 @@ import anthropic
 from dotenv import load_dotenv
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.agents import Agent
-
 from ...tools.tools import claude_web_search
 
 dotenv_path = os.path.join(os.getcwd(), ".env")
 load_dotenv(dotenv_path)  # loads ANTHROPIC_API_KEY from .env
+
 # Get the directory of the current file
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # Navigate up to the agentlab_v5 directory and get config.yaml
@@ -25,38 +25,39 @@ class ClaudeWebSearchValidator(Agent):
     """
     async def handle(self, conversation, memory):
         print.info("Starting idea validation")
-        ideas = memory["IdeaCoach"]  # list of {"id", "idea"}
-        scores = []
-        for idea in ideas:
-            print.debug(f"Validating idea: {idea['idea']}")
-            # Use Claude web search function
-            search_results = claude_web_search(idea["idea"],anthropic_client=anthropic_client)
-            num_results = len(search_results.get("results", []))
-            
-            # Calculate scores based on search results
-            feasibility = min(num_results/5, 1.0)
-            innovation = max(1.0 - num_results/10, 0.0)
-            final_score = feasibility * 0.6 + innovation * 0.4
-            
-            scores.append({
-                "id": idea["id"],
-                "feasibility": round(feasibility, 2),
-                "innovation": round(innovation, 2),
-                "score": round(final_score, 2),
-            })
-            print.debug(f"Score calculated: {scores[-1]}")
-        return scores
+        selected_idea = memory.get("SelectedIdea")  # single {"id", "idea"}
+        if not selected_idea:
+            await conversation.send_message("No idea selected for validation. Please select an idea first.")
+            return []
+        print.debug(f"Validating selected idea: {selected_idea['idea']}")
+        # Use Claude web search function
+        search_results = claude_web_search(selected_idea["idea"], anthropic_client=anthropic_client)
+        num_results = len(search_results.get("results", []))
+        # Calculate scores based on search results
+        feasibility = min(num_results/5, 1.0)
+        innovation = max(1.0 - num_results/10, 0.0)
+        final_score = feasibility * 0.6 + innovation * 0.4
+        score = {
+            "id": selected_idea["id"],
+            "feasibility": round(feasibility, 2),
+            "innovation": round(innovation, 2),
+            "score": round(final_score, 2),
+            "notes": f"Search hits: {num_results}. Feasibility and innovation calculated based on web presence."
+        }
+        print.debug(f"Score calculated: {score}")
+        return [score]
 
 # Create the validator agent
 validator_agent = ClaudeWebSearchValidator(
     name="validator_agent",
     model=LiteLlm(model=cfg["model"]),
     instruction="""
-    You are a supportive and insightful AI coach that helps users evaluate and refine their ideas, incorporating technical concept validation.
-    
+    You are VentureBot, a supportive and insightful AI validator agent that helps users evaluate and refine their ideas, incorporating technical concept validation.
+    The user may refer to you or the workflow as 'VentureBot' at any time, and you should always respond as VentureBot.
+    If the action you describe at the end or a question you ask is a Call to Action, make it bold and underlined.
     Your role is to:
     1. Idea Evaluation:
-       - Analyze each idea from memory['IdeaCoach'] using web search
+       - Analyze the idea from memory['SelectedIdea'] using web search
        - Assess feasibility and innovation potential
        - Evaluate technical concept implementation
        - Provide constructive feedback and suggestions
@@ -87,13 +88,14 @@ validator_agent = ClaudeWebSearchValidator(
          },
          ...
        ]
+       - Show the user the results in a readable format in the chat
     
     5. Requirements:
        - Use claude_web_search for each idea
        - Calculate scores using specified formulas
        - Include detailed notes for each idea
        - Maintain proper JSON formatting
-    
+    6. if the user wants to move forward, hand over to the product manager agent
     Remember to:
     - Be constructive and supportive in feedback
     - Focus on opportunities for improvement

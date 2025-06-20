@@ -4,11 +4,11 @@ import anthropic
 from dotenv import load_dotenv
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.agents import Agent
-
 from ...tools.tools import claude_web_search
 
 dotenv_path = os.path.join(os.getcwd(), ".env")
 load_dotenv(dotenv_path)  # loads ANTHROPIC_API_KEY from .env
+
 # Get the directory of the current file
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # Navigate up to the agentlab_v5 directory and get config.yaml

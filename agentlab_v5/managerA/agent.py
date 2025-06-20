@@ -10,7 +10,6 @@ from .sub_agents.prompt_engineer.agent import prompt_engineer
 from .sub_agents.idea_generator.agent import idea_generator
 from .sub_agents.validator_agent.agent import validator_agent
 from .sub_agents.onboarding_agent.agent import onboarding_agent
-
 # First check environment variables (prioritize --env-file in Docker)
 api_key = os.getenv("ANTHROPIC_API_KEY")
 
