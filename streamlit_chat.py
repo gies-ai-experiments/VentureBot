@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # Configuration
-# Direct connection to ADK server (no proxy needed)
+# With host networking, always use localhost
 ADK_SERVER_URL = "http://localhost:8000"
 
 APP_NAME = "managerA"

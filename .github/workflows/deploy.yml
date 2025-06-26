@@ -92,63 +92,65 @@ jobs:
             fi
             echo "Dockerfile found."
 
-            echo "--- Building Docker image: $IMAGE_NAME ---"
-            docker build -t "$IMAGE_NAME" .
-
-            echo "--- Stopping and removing old container: $CONTAINER_NAME ---"
-            docker stop "$CONTAINER_NAME" || true  # Ignore error if container doesn't exist
-            docker rm "$CONTAINER_NAME" || true   # Ignore error if container doesn't exist
-
-            echo "--- Starting new container: $CONTAINER_NAME ---"
+            echo "--- Building and starting multi-container application ---"
             
-            docker run -d -p 80:80 --env-file .env --name "$CONTAINER_NAME" "$IMAGE_NAME"
+            # Stop and remove existing containers
+            echo "Stopping existing containers..."
+            docker-compose down || true
             
-            echo "--- Container started with both Streamlit frontend and ADK backend ---"
+            # Remove old images to ensure fresh build
+            docker system prune -f
+            
+            # Build and start containers
+            echo "Building and starting containers..."
+            docker-compose up -d --build
+            
+            echo "--- Multi-container application started ---"
             echo "Frontend (Streamlit): http://$(curl -s ifconfig.me)"
-            echo "Backend API: http://$(curl -s ifconfig.me)/api"
+            echo "Backend API: Internal only (http://backend:8000)"
 
-            echo "--- Verifying container startup for $CONTAINER_NAME ---"
+            echo "--- Verifying multi-container startup ---"
             sleep 30 # Wait for 30 seconds to allow all services to initialize
 
-            # Check if the container is running and has not exited
-            if docker ps --filter "name=^/${CONTAINER_NAME}$" --filter "status=running" --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
-                echo "Container '$CONTAINER_NAME' started successfully and is running."
+            # Check if both containers are running
+            if docker-compose ps | grep -q "Up"; then
+                echo "✅ Multi-container application started successfully"
                 
                 # Check service health
                 echo "--- Checking service health ---"
                 
-                # Check if nginx is responding
-                if curl -f http://localhost/health > /dev/null 2>&1; then
-                    echo "✅ Nginx proxy is healthy"
+                # Check frontend health
+                if curl -f http://localhost/_stcore/health > /dev/null 2>&1; then
+                    echo "✅ Frontend (Streamlit) is healthy"
                 else
-                    echo "❌ Nginx proxy health check failed"
+                    echo "❌ Frontend health check failed"
                 fi
                 
-                # Show supervisor status
-                echo "--- Supervisor service status ---"
-                docker exec "$CONTAINER_NAME" supervisorctl status || true
+                # Show container status
+                echo "--- Container status ---"
+                docker-compose ps
                 
                 # Show recent logs
-                echo "--- Recent container logs ---"
-                docker logs --tail 20 "$CONTAINER_NAME"
+                echo "--- Recent logs ---"
+                echo "Backend logs:"
+                docker-compose logs --tail 20 backend
+                echo "Frontend logs:"
+                docker-compose logs --tail 20 frontend
                 
                 echo "--- Deployment to VM completed successfully! ---"
                 echo "🌐 Frontend (Streamlit): http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')"
-                echo "🔧 Backend API: http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')/api"
-                echo "❤️ Health Check: http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')/health"
+                echo "🔧 Backend API: Internal network only"
+                echo "📋 Container Status: docker-compose ps"
             else
-                echo "Error: Container '$CONTAINER_NAME' did not start correctly or has exited."
+                echo "Error: Multi-container application did not start correctly."
                 echo "--- Container status ---"
-                docker ps -a --filter "name=$CONTAINER_NAME"
+                docker-compose ps
                 
-                echo "--- Recent logs for container '$CONTAINER_NAME' ---"
-                docker logs --tail 100 "$CONTAINER_NAME" || echo "Could not retrieve logs for $CONTAINER_NAME"
+                echo "--- Backend logs ---"
+                docker-compose logs backend
                 
-                echo "--- Checking if container exists ---"
-                if docker ps -a --filter "name=^/${CONTAINER_NAME}$" --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
-                    echo "Container exists but not running. Checking exit code..."
-                    docker inspect "$CONTAINER_NAME" --format='{{.State.ExitCode}}' || true
-                fi
+                echo "--- Frontend logs ---"
+                docker-compose logs frontend
                 
                 exit 1 # Explicitly fail the deployment step
             fi 
