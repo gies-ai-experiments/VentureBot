@@ -13,14 +13,8 @@ st.set_page_config(
 )
 
 # Configuration
-# Use relative path for API calls (works with nginx proxy in production)
-import os
-if os.getenv('STREAMLIT_SERVER_PORT') == "8501":
-    # Running in production (Docker) - use relative API path
-    ADK_SERVER_URL = "/api"
-else:
-    # Running locally - use direct localhost connection
-    ADK_SERVER_URL = "http://localhost:8000"
+# Direct connection to ADK server (no proxy needed)
+ADK_SERVER_URL = "http://localhost:8000"
 
 APP_NAME = "managerA"
 
