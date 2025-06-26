@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import json
 import time
+import os
 from datetime import datetime
 
 # Configure Streamlit page
@@ -13,8 +14,8 @@ st.set_page_config(
 )
 
 # Configuration
-# With host networking, always use localhost
-ADK_SERVER_URL = "http://localhost:8000"
+# Use environment variable for backend URL, fallback to localhost
+ADK_SERVER_URL = os.getenv("ADK_BACKEND_URL", "http://localhost:8000")
 
 APP_NAME = "managerA"
 

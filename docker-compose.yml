@@ -7,7 +7,8 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     container_name: venturebots-backend
-    network_mode: host
+    ports:
+      - "8000:8000"
     env_file:
       - .env
     restart: unless-stopped
@@ -24,11 +25,12 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     container_name: venturebots-frontend
-    network_mode: host
+    ports:
+      - "80:80"
     depends_on:
       - backend
     environment:
-      - ADK_BACKEND_URL=http://localhost:8000
+      - ADK_BACKEND_URL=http://backend:8000
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/_stcore/health"]
