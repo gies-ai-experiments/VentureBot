@@ -62,16 +62,6 @@ The framework consists of several specialized agents:
   export OPENAI_API_KEY="your_api_key_here"
   ```
 
-## Running the Agent
-The ADK CLI provides both a web UI and a CLI runner.
-
-### Web UI
-```bash
-# Navigate to the agentlab_v5 directory
-cd agentlab_v5
-
-# Start the interactive web interface
-adk web
 4. **Set up environment variables**:
    Create a `.env` file in the project root and add your API keys:
    ```env
@@ -85,24 +75,77 @@ adk web
    - **OpenAI API**: Alternative LLM provider option
    - **SerpAPI**: Used for competitive search and market research
 
-### Using ADK Web Interface (Recommended)
+## Running the Application
 
-1. Navigate to the agentlab_v5 directory:
-   ```bash
-   cd agentlab_v5
-   ```
+AgentLab provides multiple interfaces to interact with the AI agents. Choose the interface that best fits your needs.
 
-2. Start the ADK web interface:
-   ```bash
-   adk web
-   or use adk web --port=<port-no>
-   ```
+### Option 1: Streamlit Chat Interface (Recommended for Chat)
 
-3. Open your browser at `http://localhost:8080` to access the web interface.
+The Streamlit interface provides a modern ChatGPT-like experience for interacting with Venture Bot.
 
-### Using Uvicorn Directly
+**Step 1: Start the Backend (ADK Server)**
+```bash
+# Navigate to the agentlab_v5 directory
+cd agentlab_v5
 
-If you prefer to run with uvicorn directly:
+# Start the ADK API server on port 8000
+adk api_server --port 8000
+```
+
+**Step 2: Install Streamlit Dependencies**
+```bash
+# Install Streamlit requirements (from project root)
+pip install -r requirements_streamlit.txt
+```
+
+**Step 3: Start the Streamlit Frontend**
+```bash
+# Start the Streamlit chat interface
+streamlit run streamlit_chat.py
+```
+
+**Step 4: Access the Chat Interface**
+- Open your browser to `http://localhost:8501`
+- The interface will automatically create a session and connect to Venture Bot
+- Start chatting with your AI agent immediately
+
+### Option 2: ADK Web Interface
+
+The ADK web interface provides the native Google ADK development experience.
+
+**Step 1: Start the Web Interface**
+```bash
+# Navigate to the agentlab_v5 directory
+cd agentlab_v5
+
+# Start the ADK web interface
+adk web --port 8080
+```
+
+**Step 2: Access the Interface**
+- Open your browser to `http://localhost:8080`
+- Use the web UI to interact with agents
+
+### Option 3: API Server Only
+
+For developers who want to build custom frontends or integrate with other applications.
+
+**Start the API Server**
+```bash
+cd agentlab_v5
+
+# Start API server for custom integrations
+adk api_server --port 8000
+```
+
+**API Endpoints Available:**
+- `POST /apps/managerA/users/{user_id}/sessions/{session_id}` - Create session
+- `POST /run` - Send messages to agent
+- `POST /run_sse` - Send messages with streaming responses
+
+### Option 4: Using Uvicorn Directly
+
+For advanced users who prefer direct uvicorn control:
 
 ```bash
 cd agentlab_v5
