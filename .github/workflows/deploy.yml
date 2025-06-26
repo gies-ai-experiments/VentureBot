@@ -3,7 +3,7 @@ name: Deploy to VM on Main Push
 on:
   push:
     branches:
-      - testing # Or your primary deployment branch
+      - api-server-with-stream-lit-frontend # Or your primary deployment branch
 
 jobs:
   deploy:
