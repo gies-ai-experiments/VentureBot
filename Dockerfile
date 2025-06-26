@@ -34,10 +34,31 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 RUN echo 'server {\n\
     listen 80;\n\
     server_name _;\n\
+    client_max_body_size 100M;\n\
+    \n\
+    # Health check endpoint\n\
+    location /health {\n\
+        access_log off;\n\
+        return 200 "healthy\\n";\n\
+        add_header Content-Type text/plain;\n\
+    }\n\
+    \n\
+    # Backend API (ADK) - must come before / location\n\
+    location /api/ {\n\
+        rewrite ^/api/(.*) /$1 break;\n\
+        proxy_pass http://127.0.0.1:8000;\n\
+        proxy_http_version 1.1;\n\
+        proxy_set_header Host $host;\n\
+        proxy_set_header X-Real-IP $remote_addr;\n\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-Proto $scheme;\n\
+        proxy_read_timeout 300s;\n\
+        proxy_connect_timeout 75s;\n\
+    }\n\
     \n\
     # Frontend (Streamlit)\n\
     location / {\n\
-        proxy_pass http://localhost:8501;\n\
+        proxy_pass http://127.0.0.1:8501;\n\
         proxy_http_version 1.1;\n\
         proxy_set_header Upgrade $http_upgrade;\n\
         proxy_set_header Connection "upgrade";\n\
@@ -46,17 +67,8 @@ RUN echo 'server {\n\
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
         proxy_cache_bypass $http_upgrade;\n\
-    }\n\
-    \n\
-    # Backend API (ADK)\n\
-    location /api/ {\n\
-        rewrite ^/api/(.*) /$1 break;\n\
-        proxy_pass http://localhost:8000;\n\
-        proxy_http_version 1.1;\n\
-        proxy_set_header Host $host;\n\
-        proxy_set_header X-Real-IP $remote_addr;\n\
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
-        proxy_set_header X-Forwarded-Proto $scheme;\n\
+        proxy_read_timeout 300s;\n\
+        proxy_connect_timeout 75s;\n\
     }\n\
 }\n\
 ' > /etc/nginx/sites-available/default
@@ -65,6 +77,26 @@ RUN echo 'server {\n\
 RUN echo '[supervisord]\n\
 nodaemon=true\n\
 user=root\n\
+loglevel=info\n\
+\n\
+[program:adk_server]\n\
+command=sh -c "cd /app/agentlab_v5 && adk api_server --port 8000 --host 127.0.0.1"\n\
+directory=/app\n\
+autostart=true\n\
+autorestart=true\n\
+stderr_logfile=/var/log/adk_error.log\n\
+stdout_logfile=/var/log/adk_access.log\n\
+priority=100\n\
+\n\
+[program:streamlit]\n\
+command=streamlit run streamlit_chat.py --server.port 8501 --server.address 127.0.0.1 --server.headless true\n\
+directory=/app\n\
+autostart=true\n\
+autorestart=true\n\
+stderr_logfile=/var/log/streamlit_error.log\n\
+stdout_logfile=/var/log/streamlit_access.log\n\
+environment=STREAMLIT_SERVER_PORT="8501"\n\
+priority=200\n\
 \n\
 [program:nginx]\n\
 command=nginx -g "daemon off;"\n\
@@ -72,22 +104,7 @@ autostart=true\n\
 autorestart=true\n\
 stderr_logfile=/var/log/nginx_error.log\n\
 stdout_logfile=/var/log/nginx_access.log\n\
-\n\
-[program:adk_server]\n\
-command=sh -c "cd /app/agentlab_v5 && adk api_server --port 8000"\n\
-directory=/app\n\
-autostart=true\n\
-autorestart=true\n\
-stderr_logfile=/var/log/adk_error.log\n\
-stdout_logfile=/var/log/adk_access.log\n\
-\n\
-[program:streamlit]\n\
-command=streamlit run streamlit_chat.py --server.port 8501 --server.address 0.0.0.0\n\
-directory=/app\n\
-autostart=true\n\
-autorestart=true\n\
-stderr_logfile=/var/log/streamlit_error.log\n\
-stdout_logfile=/var/log/streamlit_access.log\n\
+priority=300\n\
 ' > /etc/supervisor/conf.d/supervisord.conf
 
 # Make port 80 available to the world outside this container

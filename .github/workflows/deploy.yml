@@ -108,17 +108,47 @@ jobs:
             echo "Backend API: http://$(curl -s ifconfig.me)/api"
 
             echo "--- Verifying container startup for $CONTAINER_NAME ---"
-            sleep 15 # Wait for 15 seconds to allow container to initialize or fail
+            sleep 30 # Wait for 30 seconds to allow all services to initialize
 
             # Check if the container is running and has not exited
-            # We look for a container with the exact name that is currently running
             if docker ps --filter "name=^/${CONTAINER_NAME}$" --filter "status=running" --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
                 echo "Container '$CONTAINER_NAME' started successfully and is running."
+                
+                # Check service health
+                echo "--- Checking service health ---"
+                
+                # Check if nginx is responding
+                if curl -f http://localhost/health > /dev/null 2>&1; then
+                    echo "✅ Nginx proxy is healthy"
+                else
+                    echo "❌ Nginx proxy health check failed"
+                fi
+                
+                # Show supervisor status
+                echo "--- Supervisor service status ---"
+                docker exec "$CONTAINER_NAME" supervisorctl status || true
+                
+                # Show recent logs
+                echo "--- Recent container logs ---"
+                docker logs --tail 20 "$CONTAINER_NAME"
+                
                 echo "--- Deployment to VM completed successfully! ---"
+                echo "🌐 Frontend (Streamlit): http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')"
+                echo "🔧 Backend API: http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')/api"
+                echo "❤️ Health Check: http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')/health"
             else
                 echo "Error: Container '$CONTAINER_NAME' did not start correctly or has exited."
-                echo "Recent logs for container '$CONTAINER_NAME':"
-                # Attempt to get logs, will fail if container never created a log stream
-                docker logs --tail 50 "$CONTAINER_NAME" || echo "Could not retrieve logs for $CONTAINER_NAME (it might not have started or written logs)."
+                echo "--- Container status ---"
+                docker ps -a --filter "name=$CONTAINER_NAME"
+                
+                echo "--- Recent logs for container '$CONTAINER_NAME' ---"
+                docker logs --tail 100 "$CONTAINER_NAME" || echo "Could not retrieve logs for $CONTAINER_NAME"
+                
+                echo "--- Checking if container exists ---"
+                if docker ps -a --filter "name=^/${CONTAINER_NAME}$" --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+                    echo "Container exists but not running. Checking exit code..."
+                    docker inspect "$CONTAINER_NAME" --format='{{.State.ExitCode}}' || true
+                fi
+                
                 exit 1 # Explicitly fail the deployment step
             fi 
