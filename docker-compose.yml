@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    image: venturebots
     container_name: venturebots-backend
     ports:
       - "8000:8000"
@@ -24,7 +25,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    container_name: venturebots-frontend
+    image: venturebots
+    container_name: venturebots-app
     ports:
       - "80:80"
     depends_on:
