@@ -21,4 +21,4 @@ EXPOSE 8000
 WORKDIR /app/agentlab_v5
 
 # Start ADK API server
-CMD ["adk", "api_server", "--port", "8000", "--host", "0.0.0.0"] 
+CMD ["adk", "api_server", "--port", "8000"] 
