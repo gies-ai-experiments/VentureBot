@@ -1,0 +1,24 @@
+# Backend Container - ADK API Server Only
+FROM python:3.13-slim
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy backend files
+COPY agentlab_v5/ ./agentlab_v5/
+COPY requirements.txt ./
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose ADK API port
+EXPOSE 8000
+
+# Set working directory for ADK
+WORKDIR /app/agentlab_v5
+
+# Start ADK API server
+CMD ["adk", "api_server", "--port", "8000"] 

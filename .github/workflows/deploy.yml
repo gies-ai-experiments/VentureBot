@@ -3,7 +3,7 @@ name: Deploy to VM on Main Push
 on:
   push:
     branches:
-      - main # Or your primary deployment branch
+      - api-server-with-stream-lit-frontend # Or your primary deployment branch
 
 jobs:
   deploy:
@@ -13,6 +13,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Prepare SSH directory
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+
+      - name: Remove stale host key
+        run: |
+          ssh-keygen -R "${{ secrets.VM_HOST }}" || true
+
+      - name: Add fresh host key
+        run: |
+          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@master
@@ -88,29 +100,85 @@ jobs:
             fi
             echo "Dockerfile found."
 
-            echo "--- Building Docker image: $IMAGE_NAME ---"
-            docker build -t "$IMAGE_NAME" .
-
-            echo "--- Stopping and removing old container: $CONTAINER_NAME ---"
-            docker stop "$CONTAINER_NAME" || true  # Ignore error if container doesn't exist
-            docker rm "$CONTAINER_NAME" || true   # Ignore error if container doesn't exist
-
-            echo "--- Starting new container: $CONTAINER_NAME ---"
+            echo "--- Checking for Docker Compose ---"
+            COMPOSE_CMD=""
             
-            docker run -d -p 80:80 --env-file .env --name "$CONTAINER_NAME" "$IMAGE_NAME"
-
-            echo "--- Verifying container startup for $CONTAINER_NAME ---"
-            sleep 15 # Wait for 15 seconds to allow container to initialize or fail
-
-            # Check if the container is running and has not exited
-            # We look for a container with the exact name that is currently running
-            if docker ps --filter "name=^/${CONTAINER_NAME}$" --filter "status=running" --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
-                echo "Container '$CONTAINER_NAME' started successfully and is running."
-                echo "--- Deployment to VM completed successfully! ---"
+            # Check for 'docker compose' (modern Docker)
+            if docker compose version &> /dev/null; then
+                echo "Using 'docker compose' (Docker Compose V2)"
+                COMPOSE_CMD="docker compose"
+            # Check for 'docker-compose' (legacy)
+            elif command -v docker-compose &> /dev/null; then
+                echo "Using 'docker-compose' (Docker Compose V1)"
+                COMPOSE_CMD="docker-compose"
             else
-                echo "Error: Container '$CONTAINER_NAME' did not start correctly or has exited."
-                echo "Recent logs for container '$CONTAINER_NAME':"
-                # Attempt to get logs, will fail if container never created a log stream
-                docker logs --tail 50 "$CONTAINER_NAME" || echo "Could not retrieve logs for $CONTAINER_NAME (it might not have started or written logs)."
+                echo "Installing docker-compose..."
+                sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+                COMPOSE_CMD="docker-compose"
+            fi
+            
+            echo "Using compose command: $COMPOSE_CMD"
+            
+            echo "--- Building and starting multi-container application ---"
+            
+            # Stop and remove existing containers
+            echo "Stopping existing containers..."
+            $COMPOSE_CMD down || true
+            
+            # Remove old images to ensure fresh build
+            docker system prune -f
+            
+            # Build and start containers
+            echo "Building and starting containers..."
+            $COMPOSE_CMD up -d --build
+            
+            echo "--- Multi-container application started ---"
+            echo "Frontend (Streamlit): http://$(curl -s ifconfig.me)"
+            echo "Backend API: Internal only (http://backend:8000)"
+
+            echo "--- Verifying multi-container startup ---"
+            sleep 30 # Wait for 30 seconds to allow all services to initialize
+
+            # Check if both containers are running
+            if $COMPOSE_CMD ps | grep -q "Up"; then
+                echo "✅ Multi-container application started successfully"
+                
+                # Check service health
+                echo "--- Checking service health ---"
+                
+                # Check frontend health
+                if curl -f http://localhost/_stcore/health > /dev/null 2>&1; then
+                    echo "✅ Frontend (Streamlit) is healthy"
+                else
+                    echo "❌ Frontend health check failed"
+                fi
+                
+                # Show container status
+                echo "--- Container status ---"
+                $COMPOSE_CMD ps
+                
+                # Show recent logs
+                echo "--- Recent logs ---"
+                echo "Backend logs:"
+                $COMPOSE_CMD logs --tail 20 backend
+                echo "Frontend logs:"
+                $COMPOSE_CMD logs --tail 20 frontend
+                
+                echo "--- Deployment to VM completed successfully! ---"
+                echo "🌐 Frontend (Streamlit): http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')"
+                echo "🔧 Backend API: Internal network only"
+                echo "📋 Container Status: $COMPOSE_CMD ps"
+            else
+                echo "Error: Multi-container application did not start correctly."
+                echo "--- Container status ---"
+                $COMPOSE_CMD ps
+                
+                echo "--- Backend logs ---"
+                $COMPOSE_CMD logs backend
+                
+                echo "--- Frontend logs ---"
+                $COMPOSE_CMD logs frontend
+                
                 exit 1 # Explicitly fail the deployment step
             fi 
