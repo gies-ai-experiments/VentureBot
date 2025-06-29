@@ -127,9 +127,6 @@ mkdir docs/
 
 # Move secondary documentation (keep README.md in root)
 mv multiagent_workflow.md docs/
-mv GOOGLE_ADK.md docs/
-mv "Multiagent for BADM 350.docx" docs/
-mv VentureBots_Launch_Article.md docs/
 ```
 
 ### 3.3 Test Infrastructure Decision
