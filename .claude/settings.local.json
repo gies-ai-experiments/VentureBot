@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git shortlog:*)",
+      "Bash(git for-each-ref:*)",
+      "Bash(git checkout:*)",
+      "Bash(diff:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
