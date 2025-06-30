@@ -1,28 +1,28 @@
-# AgentLab
+# VentureBots
 
-A multi-agent framework for idea generation, validation, and product development using Google's Agent Development Kit (ADK) and generative AI models.
+An AI-powered entrepreneurship coach that guides students through the startup journey — from idea to pitch — using a team of intelligent agents developed by AgentLab at Gies College of Business.
 
 ## Project Overview
 
-AgentLab is a sophisticated framework that orchestrates multiple AI agents to collaborate on complex tasks including idea generation, validation, competitive analysis, and Product Requirements Document (PRD) creation. The system supports both web-based and command-line interfaces.
+VentureBots is an innovative educational tool that orchestrates multiple AI agents to coach students through entrepreneurship challenges including idea generation, validation, competitive analysis, and Product Requirements Document (PRD) creation. The system supports both web-based and command-line interfaces for flexible learning experiences.
 
 ### Key Features
 
-- **Multi-agent orchestration** with specialized agents for different tasks
-- **Interactive web interface** using Google ADK's FastAPI integration
-- **Idea generation and validation** with competitive analysis
-- **Product Requirements Document (PRD)** creation
-- **Human-in-the-loop** interactions for decision making
-- **Containerized deployment** with Docker support
+- **AI-powered entrepreneurship coaching** with specialized agents for different startup stages
+- **Interactive web interface** using Google ADK's FastAPI integration  
+- **Guided idea generation and validation** with market research and competitive analysis
+- **Product Requirements Document (PRD)** creation and pitch development
+- **Student-centered learning** with human-in-the-loop interactions for decision making
+- **Containerized deployment** with Docker support for educational environments
 
 ## Architecture
 
-The framework consists of several specialized agents:
+VentureBots consists of several specialized coaching agents:
 
-- **IdeaCoachAgent**: Generates creative ideas based on user input
-- **ValidationAgent**: Validates ideas with market research and competitive analysis
-- **ProductManagerAgent**: Creates detailed Product Requirements Documents
-- **OrchestratorAgent**: Coordinates workflow between specialist agents
+- **IdeaCoachAgent**: Guides students through creative brainstorming and opportunity identification
+- **ValidationAgent**: Coaches students through market research, validation, and competitive analysis  
+- **ProductManagerAgent**: Mentors students in creating detailed Product Requirements Documents
+- **OrchestratorAgent**: Coordinates the learning journey between specialist coaching agents
 
 ## Setup
 
@@ -37,7 +37,7 @@ The framework consists of several specialized agents:
 1. **Clone the repository**:
    ```bash
    git clone <repo-url>
-   cd AgentLab
+   cd VentureBots
    ```
 
 2. **Create and activate a virtual environment**:
@@ -53,7 +53,7 @@ The framework consists of several specialized agents:
    ```
 
 ## Configuration
-- Review and edit `agentlab_v5/manager/config.yaml` to adjust parameters:
+- Review and edit `manager/config.yaml` to adjust parameters:
   - `num_ideas`: Number of ideas to brainstorm per iteration
   - `max_loops`: Number of refinement loops
   - Other thresholds if needed
@@ -77,16 +77,16 @@ The framework consists of several specialized agents:
 
 ## Running the Application
 
-AgentLab provides multiple interfaces to interact with the AI agents. Choose the interface that best fits your needs.
+VentureBots provides multiple interfaces to interact with the AI coaching agents. Choose the interface that best fits your learning needs.
 
 ### Option 1: Streamlit Chat Interface (🔥 Recommended)
 
-The Streamlit interface provides a modern ChatGPT-like experience with real-time streaming responses. This is the **easiest and most user-friendly** way to interact with AgentLab.
+The Streamlit interface provides a modern ChatGPT-like experience with real-time streaming responses. This is the **easiest and most user-friendly** way to interact with VentureBots for entrepreneurship coaching.
 
 **Step 1: Start the Backend (ADK Server)**
 ```bash
-# Navigate to the agentlab_v5 directory
-cd agentlab_v5
+# Navigate to the manager directory
+cd manager
 
 # Start the ADK API server on port 8000
 adk api_server --port 8000
@@ -106,8 +106,8 @@ streamlit run streamlit_chat.py
 
 **Step 4: Access the Chat Interface**
 - Open your browser to `http://localhost:8501`
-- The interface will automatically create a session and connect to Venture Bot
-- Start chatting with your AI agent immediately
+- The interface will automatically create a session and connect to VentureBots
+- Start your entrepreneurship coaching journey with your AI agents immediately
 
 ### Option 2: ADK Web Interface
 
@@ -115,8 +115,8 @@ The ADK web interface provides the native Google ADK development experience.
 
 **Step 1: Start the Web Interface**
 ```bash
-# Navigate to the agentlab_v5 directory
-cd agentlab_v5
+# Navigate to the manager directory
+cd manager
 
 # Start the ADK web interface
 adk web --port 8080
@@ -132,14 +132,14 @@ For developers who want to build custom frontends or integrate with other applic
 
 **Start the API Server**
 ```bash
-cd agentlab_v5
+cd manager
 
 # Start API server for custom integrations
 adk api_server --port 8000
 ```
 
 **API Endpoints Available:**
-- `POST /apps/managerA/users/{user_id}/sessions/{session_id}` - Create session
+- `POST /apps/manager/users/{user_id}/sessions/{session_id}` - Create session
 - `POST /run` - Send messages to agent
 - `POST /run_sse` - Send messages with streaming responses
 
@@ -148,38 +148,37 @@ adk api_server --port 8000
 For advanced users who prefer direct uvicorn control:
 
 ```bash
-cd agentlab_v5/managerA
+cd manager
 uvicorn app:app --host 0.0.0.0 --port 8080 --reload
 ```
 
-### Interactive Workflow
+### Interactive Coaching Workflow
 
-The system provides an interactive experience:
+VentureBots provides a guided entrepreneurship learning experience:
 
-1. **Input Phase**: Specify the type of ideas you want to generate
-2. **Generation**: AI generates multiple idea candidates
-3. **Validation**: Ideas are validated with market research and competitive analysis
-4. **Selection**: Choose from generated ideas or request regeneration
-5. **Documentation**: Create detailed PRDs for selected ideas
-6. **Refinement**: Iterate on PRDs with human feedback
-7. **Output**: Final deliverables including PRDs and implementation prompts
+1. **Discovery Phase**: Explore opportunities and define problem statements with coaching
+2. **Ideation**: AI coaches guide brainstorming and creative thinking processes
+3. **Validation**: Learn market research and competitive analysis with AI mentorship
+4. **Selection**: Make informed decisions with AI guidance and request iteration coaching
+5. **Documentation**: Develop professional PRDs with AI coaching and feedback
+6. **Refinement**: Iterate and improve with continuous AI mentorship
+7. **Pitch Development**: Create compelling presentations and pitches with AI coaching support
 
 ## Project Structure
 
 ```
-AgentLab/
-├── agentlab_v5/                    # Latest implementation
-│   └── managerA/                  # Production agent implementation
-│       ├── agent.py              # Root agent implementation
-│       ├── app.py                # FastAPI application
-│       ├── config.yaml           # Agent configuration
-│       ├── sub_agents/           # Specialized agent implementations
-│       │   ├── idea_generator/   # Creative brainstorming agent
-│       │   ├── validator_agent/  # Market validation agent
-│       │   ├── product_manager/  # PRD creation agent
-│       │   ├── prompt_engineer/  # Code prompt optimization
-│       │   └── onboarding_agent/ # User onboarding flow
-│       └── tools/                # Agent tools and utilities
+VentureBots/
+├── manager/                        # Main coaching agent implementation
+│   ├── agent.py                    # Root agent implementation
+│   ├── app.py                      # FastAPI application
+│   ├── config.yaml                 # Agent configuration
+│   ├── sub_agents/                 # Specialized coaching agent implementations
+│   │   ├── idea_generator/         # Creative brainstorming coaching agent
+│   │   ├── validator_agent/        # Market validation coaching agent
+│   │   ├── product_manager/        # PRD creation coaching agent
+│   │   ├── prompt_engineer/        # Code prompt optimization coaching
+│   │   └── onboarding_agent/       # Student onboarding and orientation
+│   └── tools/                      # Agent tools and utilities
 ├── streamlit_chat.py              # Modern chat interface (recommended)
 ├── requirements.txt               # Backend dependencies
 ├── requirements_streamlit.txt     # Frontend dependencies
@@ -189,13 +188,13 @@ AgentLab/
 ├── Dockerfile.frontend            # Frontend-specific container
 ├── docs/                          # Documentation
 │   ├── CLEANUP_PLAN.md           # Repository optimization guide
-│   └── VentureBots_Launch_Article.md # Project overview
+│   └── VentureBots_Launch_Article.md # VentureBots project overview
 └── README.md                      # This file
 ```
 
 ## Configuration
 
-The `config.yaml` file in `agentlab_v5/managerA/` directory can be customized:
+The `config.yaml` file in the `manager/` directory can be customized:
 
 ```yaml
 num_ideas: 5
@@ -298,10 +297,10 @@ pip install -r requirements.txt
 
 ## Recent Optimizations
 
-AgentLab has undergone comprehensive cleanup and optimization:
+VentureBots has undergone comprehensive cleanup and optimization:
 
 - **🧹 Repository Cleanup**: Removed 2,644+ cache directories and 500MB+ of redundant files
-- **📁 Streamlined Structure**: Consolidated to single production implementation (`managerA`)
+- **📁 Streamlined Structure**: Consolidated to single production implementation (`manager`)
 - **⚡ Performance**: 40-50% reduction in file count for faster git operations
 - **🔧 Enhanced Tooling**: Improved .gitignore and Docker configurations
 - **📚 Better Documentation**: Added comprehensive guides and project overview

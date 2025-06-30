@@ -7,8 +7,8 @@ from datetime import datetime
 
 # Configure Streamlit page
 st.set_page_config(
-    page_title="ADK Agent Chat",
-    page_icon="🤖",
+    page_title="VentureBots - AI Entrepreneurship Coach",
+    page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -17,7 +17,7 @@ st.set_page_config(
 # Use environment variable for backend URL, fallback to localhost
 ADK_SERVER_URL = os.getenv("ADK_BACKEND_URL", "http://localhost:8000")
 
-APP_NAME = "managerA"
+APP_NAME = "manager"
 
 def create_session(user_id, session_id, initial_state=None):
     """Create a new ADK session"""
@@ -108,20 +108,22 @@ def initialize_session():
         st.session_state.session_id = f"session_{int(time.time())}"
 
 def main():
-    st.title("🤖 Venture Bot")
+    st.title("🚀 VentureBots - AI Entrepreneurship Coach")
     
     # Initialize session
     initialize_session()
     
     # Sidebar configuration
     with st.sidebar:
-        st.header("Configuration")
-        st.write(f"**Server:** {ADK_SERVER_URL}")
-        st.write(f"**Agent:** {APP_NAME}")
-        st.write(f"**User ID:** {st.session_state.user_id}")
+        st.header("🎓 Learning Session")
+        st.write("**AgentLab @ Gies College**")
+        st.write(f"**Coach:** {APP_NAME}")
+        st.write(f"**Student ID:** {st.session_state.user_id}")
         st.write(f"**Session ID:** {st.session_state.session_id}")
+        st.divider()
+        st.write("**Server:** " + ADK_SERVER_URL.replace("http://", "").replace("https://", ""))
         
-        if st.button("🔄 Reset Chat"):
+        if st.button("🔄 New Learning Session"):
             st.session_state.messages = []
             st.session_state.session_created = False
             st.session_state.user_id = f"user_{int(time.time())}"
@@ -130,13 +132,13 @@ def main():
         
         # Session status
         if st.session_state.session_created:
-            st.success("✅ Session Active")
+            st.success("✅ Coaching Session Active")
         else:
-            st.warning("⏳ Creating Session...")
+            st.warning("⏳ Connecting to AI Coaches...")
     
     # Create session if not already created
     if not st.session_state.session_created:
-        with st.spinner("Creating session and connecting to Venture Bot..."):
+        with st.spinner("Creating session and connecting to VentureBots coaching team..."):
             success, message = create_session(st.session_state.user_id, st.session_state.session_id)
             if success:
                 st.session_state.session_created = True
@@ -188,7 +190,7 @@ def main():
             st.write(message["content"])
     
     # Chat input
-    if prompt := st.chat_input("Type your message here...", disabled=not st.session_state.session_created):
+    if prompt := st.chat_input("Share your entrepreneurship ideas or ask for coaching guidance...", disabled=not st.session_state.session_created):
         # Add user message to chat
         user_message = {
             "role": "user",
@@ -215,7 +217,7 @@ def main():
             if success:
                 # Initialize streaming response
                 streaming_text = ""
-                response_placeholder.write("🤔 Agent is thinking...")
+                response_placeholder.write("🤔 Your AI coach is thinking...")
                 
                 try:
                     # Process SSE stream in real-time

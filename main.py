@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from google.adk.cli.fast_api import get_fast_api_app
 
 # The AGENT_DIR will be the root of your project, where main.py is located.
-# get_fast_api_app will scan this directory for agent modules (agentlab_v1, agentlab_v2, etc.)
+# get_fast_api_app will scan this directory for agent modules (manager/, etc.)
 AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Configuration for the ADK FastAPI app

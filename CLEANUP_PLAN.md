@@ -1,7 +1,7 @@
-# AgentLab Codebase Cleanup Plan
+# VentureBots Codebase Cleanup Plan
 
 ## Executive Summary
-The AgentLab codebase has significant redundancy issues that need to be addressed. Key findings include:
+The VentureBots codebase has significant redundancy issues that need to be addressed. Key findings include:
 - **2,644 Python cache directories** consuming unnecessary space
 - **Duplicate manager implementations** (managerA vs managerB) 
 - **Multiple virtual environments** (501MB of redundant dependencies)
@@ -162,9 +162,9 @@ Create an automated cleanup script:
 
 ```bash
 #!/bin/bash
-# cleanup.sh - AgentLab Repository Cleanup Script
+# cleanup.sh - VentureBots Repository Cleanup Script
 
-echo "Starting AgentLab repository cleanup..."
+echo "Starting VentureBots repository cleanup..."
 
 # Phase 1: Critical Cleanup
 echo "Phase 1: Removing build artifacts and cache..."

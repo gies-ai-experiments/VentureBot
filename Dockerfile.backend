@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/li
 WORKDIR /app
 
 # Copy backend files
-COPY agentlab_v5/ ./agentlab_v5/
+COPY manager/ ./manager/
 COPY requirements.txt ./
 
 # Install dependencies
@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8000
 
 # Set working directory for ADK
-WORKDIR /app/agentlab_v5
+WORKDIR /app/manager
 
 # Start ADK API server
 CMD ["adk", "api_server", "--port", "8000"] 
