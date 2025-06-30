@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.agents import Agent
 
-from tools.tools import claude_web_search
+from ...tools.tools import claude_web_search
 
 # Get the directory of the current file
 current_dir = os.path.dirname(os.path.abspath(__file__))
