@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from google.adk.cli.fast_api import get_fast_api_app
-from .agent import root_agent
+from agent import root_agent
 
 # Configuration for the ADK FastAPI app
 SESSION_DB_URL = "sqlite:///./sessions.db"  # Default SQLite DB in the current directory
