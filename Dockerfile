@@ -33,11 +33,11 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
-echo "🚀 Starting Venture Bot services..."\n\
+echo "🚀 Starting VentureBots AI Coaching services..."\n\
 \n\
 # Start ADK API server in background\n\
 echo "📡 Starting ADK API server on port 8000..."\n\
-cd /app/agentlab_v5\n\
+cd /app/manager\n\
 adk api_server --port 8000 &\n\
 ADK_PID=$!\n\
 \n\
