@@ -32,7 +32,7 @@ services:
     depends_on:
       - backend
     environment:
-      - ADK_BACKEND_URL=http://backend:8000
+      - ADK_BACKEND_URL=https://venturebots.ncsa.ai:8000
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/_stcore/health"]
