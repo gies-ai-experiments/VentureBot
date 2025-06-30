@@ -120,29 +120,32 @@ jobs:
             
             echo "Using compose command: $COMPOSE_CMD"
             
-            echo "--- Building and starting multi-container application ---"
+            echo "--- Building and starting single container application ---"
             
             # Stop and remove existing containers
             echo "Stopping existing containers..."
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
             $COMPOSE_CMD down || true
             
             # Remove old images to ensure fresh build
             docker system prune -f
             
-            # Build and start containers
-            echo "Building and starting containers..."
-            $COMPOSE_CMD up -d --build
+            # Build and start single container with both services
+            echo "Building and starting single container..."
+            docker build -t $IMAGE_NAME .
+            docker run -d -p 80:80 --env-file .env --name $CONTAINER_NAME $IMAGE_NAME
             
-            echo "--- Multi-container application started ---"
+            echo "--- Single container application started ---"
             echo "Frontend (Streamlit): http://$(curl -s ifconfig.me)"
-            echo "Backend API: Internal only (http://backend:8000)"
+            echo "Backend API: Internal (both services in same container)"
 
-            echo "--- Verifying multi-container startup ---"
+            echo "--- Verifying single container startup ---"
             sleep 30 # Wait for 30 seconds to allow all services to initialize
 
-            # Check if both containers are running
-            if $COMPOSE_CMD ps | grep -q "Up"; then
-                echo "✅ Multi-container application started successfully"
+            # Check if container is running
+            if docker ps | grep -q "$CONTAINER_NAME"; then
+                echo "✅ Single container application started successfully"
                 
                 # Check service health
                 echo "--- Checking service health ---"
@@ -156,29 +159,23 @@ jobs:
                 
                 # Show container status
                 echo "--- Container status ---"
-                $COMPOSE_CMD ps
+                docker ps | grep "$CONTAINER_NAME"
                 
                 # Show recent logs
                 echo "--- Recent logs ---"
-                echo "Backend logs:"
-                $COMPOSE_CMD logs --tail 20 backend
-                echo "Frontend logs:"
-                $COMPOSE_CMD logs --tail 20 frontend
+                docker logs --tail 50 $CONTAINER_NAME
                 
                 echo "--- Deployment to VM completed successfully! ---"
-                echo "🌐 Frontend (Streamlit): http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')"
-                echo "🔧 Backend API: Internal network only"
-                echo "📋 Container Status: $COMPOSE_CMD ps"
+                echo "🌐 Application: http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')"
+                echo "🔧 Both frontend and backend running in single container"
+                echo "📋 Container Status: docker ps | grep $CONTAINER_NAME"
             else
-                echo "Error: Multi-container application did not start correctly."
+                echo "Error: Single container application did not start correctly."
                 echo "--- Container status ---"
-                $COMPOSE_CMD ps
+                docker ps -a | grep "$CONTAINER_NAME"
                 
-                echo "--- Backend logs ---"
-                $COMPOSE_CMD logs backend
-                
-                echo "--- Frontend logs ---"
-                $COMPOSE_CMD logs frontend
+                echo "--- Container logs ---"
+                docker logs $CONTAINER_NAME
                 
                 exit 1 # Explicitly fail the deployment step
             fi 
