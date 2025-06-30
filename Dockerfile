@@ -35,9 +35,9 @@ set -e\n\
 \n\
 echo "🚀 Starting VentureBots AI Coaching services..."\n\
 \n\
-# Start ADK API server in background\n\
+# Start ADK API server in background from the app directory\n\
 echo "📡 Starting ADK API server on port 8000..."\n\
-cd /app/manager\n\
+cd /app\n\
 adk api_server --port 8000 &\n\
 ADK_PID=$!\n\
 \n\
@@ -54,7 +54,6 @@ echo "✅ ADK API server started successfully"\n\
 \n\
 # Start Streamlit on port 80 (foreground)\n\
 echo "🎨 Starting Streamlit frontend on port 80..."\n\
-cd /app\n\
 exec streamlit run streamlit_chat.py --server.port 80 --server.address 0.0.0.0 --server.headless true\n\
 ' > /app/start_services.sh && chmod +x /app/start_services.sh
 
