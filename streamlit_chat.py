@@ -185,98 +185,104 @@ def main():
                 st.stop()
     
     # Display chat messages
-    for message in st.session_state.messages:
+    expecting_button_input = False
+    button_options = []
+    for idx, message in enumerate(st.session_state.messages):
         with st.chat_message(message["role"]):
             st.write(message["content"])
-    
-    # Chat input
-    if prompt := st.chat_input("Share your entrepreneurship ideas or ask for coaching guidance...", disabled=not st.session_state.session_created):
-        # Add user message to chat
-        user_message = {
-            "role": "user",
-            "content": prompt,
-            "timestamp": datetime.now()
-        }
-        st.session_state.messages.append(user_message)
-        
-        # Display user message
-        with st.chat_message("user"):
-            st.write(prompt)
-        
-        # Send message to ADK agent with streaming
-        with st.chat_message("assistant"):
-            # Create placeholder for streaming response
-            response_placeholder = st.empty()
-            
-            success, response = send_message_stream(
-                st.session_state.user_id,
-                st.session_state.session_id,
-                prompt
-            )
-            
-            if success:
-                # Initialize streaming response
-                streaming_text = ""
-                response_placeholder.write("🤔 Your AI coach is thinking...")
-                
-                try:
-                    # Process SSE stream in real-time
-                    for line in response.iter_lines(decode_unicode=True):
-                        if line.startswith('data: '):
-                            try:
-                                event_data = json.loads(line[6:])  # Remove 'data: ' prefix
-                                
-                                # Extract text from the event
-                                if event_data.get("content") and event_data["content"].get("parts"):
-                                    for part in event_data["content"]["parts"]:
-                                        if part.get("text") and event_data["content"].get("role") == "model":
-                                            new_text = part["text"]
-                                            # For partial responses, append; for complete responses, use as-is
-                                            if event_data.get("partial", False):
-                                                streaming_text += new_text
-                                            else:
-                                                streaming_text = new_text  # Complete response
-                                            # Update the display in real-time
-                                            response_placeholder.write(streaming_text)
-                                            
-                            except json.JSONDecodeError:
-                                continue
-                    
-                    # Final response
-                    final_response = streaming_text.strip() if streaming_text.strip() else "I processed your request but have no text response."
-                    response_placeholder.write(final_response)
-                    
-                    # Add assistant message to history
-                    assistant_message = {
-                        "role": "assistant",
-                        "content": final_response,
-                        "timestamp": datetime.now()
-                    }
-                    st.session_state.messages.append(assistant_message)
-                    
-                except Exception as e:
-                    error_msg = f"❌ Streaming Error: {str(e)}"
-                    response_placeholder.error(error_msg)
-                    
-                    # Add error message to history
+            # If assistant message contains options, render buttons
+            if message["role"] == "assistant" and "options" in message and isinstance(message["options"], list):
+                expecting_button_input = True
+                button_options = message["options"]
+                for option in button_options:
+                    if st.button(option, key=f"option_{idx}_{option}"):
+                        # Add the button press as a user message
+                        user_message = {
+                            "role": "user",
+                            "content": option,
+                            "timestamp": datetime.now()
+                        }
+                        st.session_state.messages.append(user_message)
+                        st.rerun()  # Rerun to process the new user message
+    # Chat input (only show if not expecting button input)
+    if not expecting_button_input:
+        if prompt := st.chat_input("Share your entrepreneurship ideas or ask for coaching guidance...", disabled=not st.session_state.session_created):
+            # Add user message to chat
+            user_message = {
+                "role": "user",
+                "content": prompt,
+                "timestamp": datetime.now()
+            }
+            st.session_state.messages.append(user_message)
+            # Display user message
+            with st.chat_message("user"):
+                st.write(prompt)
+            # Send message to ADK agent with streaming
+            with st.chat_message("assistant"):
+                # Create placeholder for streaming response
+                response_placeholder = st.empty()
+                success, response = send_message_stream(
+                    st.session_state.user_id,
+                    st.session_state.session_id,
+                    prompt
+                )
+                if success:
+                    # Initialize streaming response
+                    streaming_text = ""
+                    response_placeholder.write("🤔 Your AI coach is thinking...")
+                    try:
+                        # Process SSE stream in real-time
+                        for line in response.iter_lines(decode_unicode=True):
+                            if line.startswith('data: '):
+                                try:
+                                    event_data = json.loads(line[6:])  # Remove 'data: ' prefix
+                                    # Extract text and options from the event
+                                    options = event_data.get("options") if isinstance(event_data, dict) else None
+                                    if event_data.get("content") and event_data["content"].get("parts"):
+                                        for part in event_data["content"]["parts"]:
+                                            if part.get("text") and event_data["content"].get("role") == "model":
+                                                new_text = part["text"]
+                                                if event_data.get("partial", False):
+                                                    streaming_text += new_text
+                                                else:
+                                                    streaming_text = new_text  # Complete response
+                                                response_placeholder.write(streaming_text)
+                                    # If options are present, add them to the assistant message
+                                    if options and isinstance(options, list):
+                                        break  # Stop streaming if options are detected
+                                except json.JSONDecodeError:
+                                    continue
+                        # Final response
+                        final_response = streaming_text.strip() if streaming_text.strip() else "I processed your request but have no text response."
+                        response_placeholder.write(final_response)
+                        # Add assistant message to history
+                        assistant_message = {
+                            "role": "assistant",
+                            "content": final_response,
+                            "timestamp": datetime.now()
+                        }
+                        # If options were detected, add them to the message
+                        if 'options' in locals() and options and isinstance(options, list):
+                            assistant_message["options"] = options
+                        st.session_state.messages.append(assistant_message)
+                    except Exception as e:
+                        error_msg = f"❌ Streaming Error: {str(e)}"
+                        response_placeholder.error(error_msg)
+                        error_message = {
+                            "role": "assistant",
+                            "content": error_msg,
+                            "timestamp": datetime.now()
+                        }
+                        st.session_state.messages.append(error_message)
+                else:
+                    error_msg = f"❌ Error: {response}"
+                    st.error(error_msg)
                     error_message = {
                         "role": "assistant",
                         "content": error_msg,
                         "timestamp": datetime.now()
                     }
                     st.session_state.messages.append(error_message)
-            
-            else:
-                error_msg = f"❌ Error: {response}"
-                st.error(error_msg)
-                
-                # Add error message to history
-                error_message = {
-                    "role": "assistant",
-                    "content": error_msg,
-                    "timestamp": datetime.now()
-                }
-                st.session_state.messages.append(error_message)
 
 if __name__ == "__main__":
     main() 
