@@ -13,6 +13,67 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# --- Responsive CSS for mobile/tablet friendliness ---
+st.markdown(
+    """
+    <style>
+    /* Make chat input sticky on mobile for thumb reach */
+    @media (max-width: 768px) {
+        div[data-testid="stChatInput"] {
+            position: sticky;
+            bottom: env(safe-area-inset-bottom, 0);
+            z-index: 2;
+            background: #222 !important;
+        }
+        /* Hide sidebar by default, show with toggle */
+        section[data-testid="stSidebar"] {
+            display: none;
+        }
+        /* Reduce padding and font size for chat bubbles */
+        .element-container, .stChatMessage {
+            padding: 0.5rem !important;
+        }
+        .stChatMessage {
+            font-size: 1rem !important;
+        }
+    }
+    /* General chat bubble styling for all screens */
+    .stChatMessage {
+        border-radius: 16px;
+        margin-bottom: 0.5rem;
+        padding: 1rem;
+        background: #222 !important;
+        color: #f1f1f1 !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    /* User and assistant color distinction */
+    .stChatMessage[data-testid="stChatMessage-user"] {
+        background: linear-gradient(135deg, #333 0%, #444 100%) !important;
+        border-left: 4px solid #00acc1;
+        color: #f1f1f1 !important;
+    }
+    .stChatMessage[data-testid="stChatMessage-assistant"] {
+        background: linear-gradient(135deg, #23272e 0%, #2c313a 100%) !important;
+        border-left: 4px solid #fbc02d;
+        color: #f1f1f1 !important;
+    }
+    /* Chat input box styling ONLY */
+    textarea[data-testid="stChatInputTextArea"] {
+        min-height: 80px !important;
+        font-size: 1.2rem !important;
+        padding: 1rem !important;
+        background: #23272e !important;
+        color: #f1f1f1 !important;
+        border-radius: 8px !important;
+        border: 1px solid #444 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+        resize: vertical !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Configuration
 # Use environment variable for backend URL, fallback to localhost
 ADK_SERVER_URL = os.getenv("ADK_BACKEND_URL", "http://localhost:8000")
