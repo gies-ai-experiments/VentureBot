@@ -116,7 +116,7 @@ def main():
     # Sidebar configuration
     with st.sidebar:
         st.header("🎓 Learning Session")
-        st.write("**VentureBot @ Gies College**")
+        st.write("**VentureBots by AgentLab @ Gies College**")
         st.write(f"**Coach:** {APP_NAME}")
         st.write(f"**Student ID:** {st.session_state.user_id}")
         st.write(f"**Session ID:** {st.session_state.session_id}")
@@ -279,4 +279,4 @@ def main():
                 st.session_state.messages.append(error_message)
 
 if __name__ == "__main__":
-    main() 
+    main()
