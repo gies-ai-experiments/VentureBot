@@ -68,26 +68,53 @@ st.markdown(
         border-left: 4px solid #fbc02d;
         color: #f1f1f1 !important;
     }
-    /* Chat input box styling ONLY */
-    textarea[data-testid="stChatInputTextArea"] {
+    /* Force consistent chat input styling - override all possible changes */
+    div[data-testid="stChatInput"],
+    div[data-testid="stChatInput"] *,
+    div[data-testid="stChatInputContainer"],
+    div[data-testid="stChatInputContainer"] * {
+        height: auto !important;
+        min-height: 120px !important;
+        max-height: 200px !important;
+        box-sizing: border-box !important;
+    }
+    
+    textarea[data-testid="stChatInputTextArea"],
+    textarea[data-testid="stChatInputTextArea"]:focus,
+    textarea[data-testid="stChatInputTextArea"]:active,
+    textarea[data-testid="stChatInputTextArea"]:hover {
         min-height: 80px !important;
+        max-height: 80px !important;
+        height: 80px !important;
         font-size: 1.2rem !important;
         padding: 1rem !important;
         background: #23272e !important;
         color: #f1f1f1 !important;
         border-radius: 8px !important;
         border: 1px solid #444 !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-        resize: vertical !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important;
+        resize: none !important;
+        caret-color: white !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+        line-height: 1.5 !important;
+        font-family: inherit !important;
+    }
+    
+    /* Prevent any dynamic height changes */
+    div[data-testid="stChatInput"] {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    textarea[data-testid="stChatInputTextArea"] {
+        transition: none !important;
+        animation: none !important;
     }
     /* Placeholder text styling for chat input */
     textarea[data-testid="stChatInputTextArea"]::placeholder {
         color: #f1f1f1 !important;
         opacity: 0.7;
-    }
-    /* White blinking cursor for chat input */
-    textarea[data-testid="stChatInputTextArea"] {
-        caret-color: white !important;
     }
     /* Ensure chat output text is white in light mode */
     .stChatMessage p, .stChatMessage div, .stChatMessage span {
