@@ -74,31 +74,54 @@ st.markdown(
     div[data-testid="stChatInputContainer"],
     div[data-testid="stChatInputContainer"] * {
         height: auto !important;
-        min-height: 120px !important;
-        max-height: 200px !important;
+        min-height: 140px !important;
+        max-height: 240px !important;
         box-sizing: border-box !important;
     }
     
+    /* Remove the outer grey shadow wrapper - only dark chat input remains */
+    div[data-testid="stChatInput"] {
+        background: #23272e !important;
+        border-radius: 20px !important;
+        width: 100%;
+        box-sizing: border-box !important;
+        min-height: 120px !important;
+        max-width: 100%;
+        margin: 0 !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
     textarea[data-testid="stChatInputTextArea"],
     textarea[data-testid="stChatInputTextArea"]:focus,
     textarea[data-testid="stChatInputTextArea"]:active,
     textarea[data-testid="stChatInputTextArea"]:hover {
-        min-height: 80px !important;
-        max-height: 80px !important;
-        height: 80px !important;
+        min-height: 120px !important;
+        max-height: 120px !important;
+        height: 120px !important;
+        width: 100% !important;
+        margin: 0 !important;
+        display: block !important;
         font-size: 1.2rem !important;
         padding: 1rem !important;
         background: #23272e !important;
         color: #f1f1f1 !important;
-        border-radius: 8px !important;
+        border-radius: 20px !important;
         border: 1px solid #444 !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.10) !important;
+        box-shadow: none !important;
         resize: none !important;
         caret-color: white !important;
         overflow-y: auto !important;
         box-sizing: border-box !important;
         line-height: 1.5 !important;
         font-family: inherit !important;
+        text-align: left !important;
+    }
+    div[data-testid^="stChatInput"] button {
+        align-self: center !important;
+        margin: 0 16px 0 0 !important;
     }
     
     /* Prevent any dynamic height changes */
