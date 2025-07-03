@@ -46,6 +46,17 @@ st.markdown(
         color: #f1f1f1 !important;
         box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
+    /* Light mode overrides - white text for chat bubbles */
+    /* When Streamlit is in light mode, ensure chat text is white */
+    .stChatMessage {
+        color: white !important;
+    }
+    .stChatMessage[data-testid="stChatMessage-user"] {
+        color: white !important;
+    }
+    .stChatMessage[data-testid="stChatMessage-assistant"] {
+        color: white !important;
+    }
     /* User and assistant color distinction */
     .stChatMessage[data-testid="stChatMessage-user"] {
         background: linear-gradient(135deg, #333 0%, #444 100%) !important;
@@ -68,6 +79,23 @@ st.markdown(
         border: 1px solid #444 !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.10);
         resize: vertical !important;
+    }
+    /* Placeholder text styling for chat input */
+    textarea[data-testid="stChatInputTextArea"]::placeholder {
+        color: #f1f1f1 !important;
+        opacity: 0.7;
+    }
+    /* White blinking cursor for chat input */
+    textarea[data-testid="stChatInputTextArea"] {
+        caret-color: white !important;
+    }
+    /* Ensure chat output text is white in light mode */
+    .stChatMessage p, .stChatMessage div, .stChatMessage span {
+        color: white !important;
+    }
+    /* Override any Streamlit default text colors in chat messages */
+    .stChatMessage * {
+        color: white !important;
     }
     </style>
     """,
