@@ -1,6 +1,6 @@
 # VentureBots
 
-An AI-powered entrepreneurship coach that guides students through the startup journey — from idea to pitch — using a team of intelligent agents developed by AgentLab at Gies College of Business.
+An AI-powered entrepreneurship coach that guides students through the startup journey — from idea to pitch — using a team of intelligent agents developed by VentureBot at Gies College of Business.
 
 ## Project Overview
 

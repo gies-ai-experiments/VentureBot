@@ -1,6 +1,6 @@
 # VentureBots: AI-Powered Entrepreneurship Coaching Workflow
 
-VentureBots guides students through the entrepreneurship journey using specialized AI coaches developed by AgentLab at Gies College of Business.
+VentureBots guides students through the entrepreneurship journey using specialized AI coaches developed by VentureBot at Gies College of Business.
 
 ```mermaid
 %%{init: {'flowchart': {'useHtmlLabels': true}}}%%

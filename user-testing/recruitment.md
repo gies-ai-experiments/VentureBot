@@ -1,7 +1,7 @@
-# User Testing Plan for AgentLab
+# User Testing Plan for VentureBot
 
 ## Overview
-This document outlines the plan for conducting user testing sessions for AgentLab. The testing will involve 3-5 sessions with peers, each lasting 15-20 minutes.
+This document outlines the plan for conducting user testing sessions for VentureBot. The testing will involve 3-5 sessions with peers, each lasting 15-20 minutes.
 
 ## Testing Schedule
 - **Session 1**: [Date] - [Time]
@@ -18,11 +18,11 @@ This document outlines the plan for conducting user testing sessions for AgentLa
 
 ### Recruitment Message Template
 ```
-Subject: Invitation to Participate in AgentLab User Testing
+Subject: Invitation to Participate in VentureBot User Testing
 
 Hi [Name],
 
-I'm conducting user testing sessions for AgentLab and would appreciate your participation. The session will take 15-20 minutes of your time and will help us improve the system.
+I'm conducting user testing sessions for VentureBot and would appreciate your participation. The session will take 15-20 minutes of your time and will help us improve the system.
 
 Key details:
 - Duration: 15-20 minutes
