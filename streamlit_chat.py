@@ -168,8 +168,101 @@ def initialize_session():
     if "session_id" not in st.session_state:
         st.session_state.session_id = f"session_{int(time.time())}"
 
+# --- Custom CSS for improved UI/UX ---
+st.markdown(
+    """
+    <style>
+    /* Make header sticky */
+    .venturebots-header {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 100;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+        color: #222 !important;
+    }
+    /* Chat bubbles */
+    .chat-bubble {
+        display: inline-block;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 18px;
+        max-width: 90%;
+        word-break: break-word;
+        font-size: 1.05rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        color: #222 !important;
+        background: #fff;
+    }
+    .chat-bubble.user {
+        background: #e0f7fa;
+        align-self: flex-end;
+        margin-left: auto;
+        color: #222 !important;
+    }
+    .chat-bubble.assistant {
+        background: #fffde7;
+        align-self: flex-start;
+        margin-right: auto;
+        color: #222 !important;
+    }
+    /* Chat input box raised above bottom */
+    .block-container .stChatInputContainer {
+        margin-bottom: 2.5rem !important;
+    }
+    /* Responsive tweaks */
+    @media (max-width: 600px) {
+        .chat-container {
+            max-height: 50vh;
+            min-height: 30vh;
+            padding: 0.5rem 0.2rem;
+        }
+        .chat-bubble {
+            font-size: 0.98rem;
+            padding: 0.6rem 0.7rem;
+        }
+        .block-container .stChatInputContainer {
+            margin-bottom: 1.2rem !important;
+        }
+        /* Make chat input box and button bigger on mobile */
+        .stChatInputContainer, .stChatInput, [data-testid="stChatInput"] > div, [data-testid="stChatInput"] {
+            min-height: 7em !important;
+            height: 7em !important;
+            padding-top: 1.2em !important;
+            padding-bottom: 1.2em !important;
+            border-radius: 3em !important;
+            display: flex !important;
+            align-items: center !important;
+            background: inherit !important;
+        }
+        textarea, .stChatInputContainer input[type="text"] {
+            min-height: 5.5em !important;
+            height: 5.5em !important;
+            font-size: 1rem !important;
+            padding: 0.8em 1em !important;
+            border-radius: 1.5em !important;
+        }
+        .stChatInputContainer button, .stChatInputContainer [data-testid="stChatInput-sendButton"] {
+            align-self: center !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            font-size: 1.5rem !important;
+            padding: 0.7em 1.2em !important;
+            min-width: 3em !important;
+            min-height: 3em !important;
+            border-radius: 1.5em !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 def main():
-    st.title("🚀 VentureBots - AI Entrepreneurship Coach")
+    # --- Sticky header ---
+    st.markdown('<div class="venturebots-header"><h1 style="margin-bottom:0.2em;">🚀 VentureBots - AI Entrepreneurship Coach</h1></div>', unsafe_allow_html=True)
     
     # Initialize session
     initialize_session()
@@ -245,10 +338,12 @@ def main():
                 st.error(f"Failed to create session: {message}")
                 st.stop()
     
-    # Display chat messages
+    # --- Chat message area ---
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
+        role = message["role"]
+        bubble_class = f"chat-bubble {role}"
+        with st.chat_message(role):
+            st.markdown(f'<div class="{bubble_class}">{message["content"]}</div>', unsafe_allow_html=True)
     
     # Chat input
     if prompt := st.chat_input("Share your entrepreneurship ideas or ask for coaching guidance...", disabled=not st.session_state.session_created):
