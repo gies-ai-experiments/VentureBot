@@ -130,6 +130,21 @@ def main():
             st.session_state.session_id = f"session_{int(time.time())}"
             st.rerun()
         
+        # Test button functionality
+        if st.button("🧪 Test Buttons"):
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": "Please choose your preferred learning path:",
+                "options": ["Business Strategy", "Marketing", "Finance", "Operations"],
+                "timestamp": datetime.now()
+            })
+            st.rerun()
+        
+        # Test mode toggle
+        test_mode = st.checkbox("🧪 Test Mode (Skip Backend)", value=False)
+        if test_mode:
+            st.session_state.session_created = True
+        
         # Session status
         if st.session_state.session_created:
             st.success("✅ Coaching Session Active")
