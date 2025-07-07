@@ -97,6 +97,21 @@ async def start():
     """Initialize chat session when user connects"""
     import time
     
+    # IMMEDIATELY send welcome message - no waiting
+    welcome_msg = cl.Message(
+        content="""👋 **Welcome to VentureBots!**
+
+I'm your AI entrepreneurship coach, ready to help you:
+- 💡 **Generate innovative business ideas**
+- ✅ **Validate your concepts** 
+- 📋 **Develop product strategies**
+- 🎯 **Craft effective prompts**
+
+🚀 **Initializing your coaching session...**""",
+        author="VentureBot"
+    )
+    await welcome_msg.send()
+    
     # Generate unique IDs
     venture_session.user_id = f"user_{int(time.time())}"
     venture_session.session_id = f"session_{int(time.time())}"
@@ -104,19 +119,23 @@ async def start():
     # Set user session data
     cl.user_session.set("venture_session", venture_session)
     
-    # Welcome message with loading
-    loading_msg = cl.Message(content="🚀 **Initializing VentureBots...**\n\nSetting up your AI entrepreneurship coaching session...")
-    await loading_msg.send()
-    
-    # Create backend session
+    # Create backend session in background
     success, message = venture_session.create_session()
     
     if success:
-        # Update loading message
-        loading_msg.content = "✅ **VentureBots Ready!**\n\nConnecting you with our AI coaches..."
-        await loading_msg.update()
+        # Update welcome message to show ready status
+        welcome_msg.content = """👋 **Welcome to VentureBots!**
+
+I'm your AI entrepreneurship coach, ready to help you:
+- 💡 **Generate innovative business ideas**
+- ✅ **Validate your concepts** 
+- 📋 **Develop product strategies**
+- 🎯 **Craft effective prompts**
+
+✅ **Ready to start!** Tell me about your interests or share an idea you'd like to explore."""
+        await welcome_msg.update()
         
-        # Send initial greeting to trigger onboarding
+        # Send initial greeting to trigger onboarding (in background)
         success, response = venture_session.send_message_stream("hi")
         
         if success and response:
@@ -126,28 +145,20 @@ async def start():
                 author="VentureBot"
             )
             await onboarding_msg.send()
-        else:
-            # Fallback welcome message
-            welcome_msg = cl.Message(
-                content="""👋 **Welcome to VentureBots!**
-
-I'm your AI entrepreneurship coach, ready to help you:
-- 💡 **Generate innovative business ideas**
-- ✅ **Validate your concepts** 
-- 📋 **Develop product strategies**
-- 🎯 **Craft effective prompts**
-
-Let's start your entrepreneurial journey! Tell me about your interests or share an idea you'd like to explore.""",
-                author="VentureBot"
-            )
-            await welcome_msg.send()
     else:
-        # Error creating session
-        error_msg = cl.Message(
-            content=f"❌ **Connection Failed**\n\n{message}\n\n💡 **Troubleshooting:**\n• Check if the backend server is running\n• Verify your connection\n• Try refreshing the page",
-            author="System"
-        )
-        await error_msg.send()
+        # Update welcome message with error
+        welcome_msg.content = f"""👋 **Welcome to VentureBots!**
+
+❌ **Connection Issue**
+{message}
+
+💡 **Troubleshooting:**
+• Check if the backend server is running
+• Verify your connection  
+• Try refreshing the page
+
+You can still chat, but responses may be delayed."""
+        await welcome_msg.update()
 
 @cl.on_message
 async def handle_message(message: cl.Message):
@@ -162,32 +173,24 @@ async def handle_message(message: cl.Message):
         await error_msg.send()
         return
     
-    # Show typing indicator
-    async with cl.Step(name="thinking", type="run") as step:
-        step.output = "🤔 Your AI coach is analyzing your message..."
-        
-        # Send message to backend
-        success, response = venture_session.send_message_stream(message.content)
-        
-        if success:
-            step.output = "✅ Response ready!"
-        else:
-            step.output = f"❌ Error: {response}"
+    # IMMEDIATELY show thinking message
+    thinking_msg = cl.Message(
+        content="🤔 Analyzing your message...",
+        author="VentureBot"
+    )
+    await thinking_msg.send()
+    
+    # Send message to backend
+    success, response = venture_session.send_message_stream(message.content)
     
     if success:
-        # Send AI response
-        ai_msg = cl.Message(
-            content=response,
-            author="VentureBot"
-        )
-        await ai_msg.send()
+        # Update thinking message with actual response
+        thinking_msg.content = response
+        await thinking_msg.update()
     else:
-        # Send error message
-        error_msg = cl.Message(
-            content=f"❌ **Connection Error**\n\n{response}\n\n🔄 Try sending your message again or refresh the page.",
-            author="System"
-        )
-        await error_msg.send()
+        # Update with error message
+        thinking_msg.content = f"❌ **Connection Error**\n\n{response}\n\n🔄 Try sending your message again or refresh the page."
+        await thinking_msg.update()
 
 @cl.on_chat_end
 async def end():
