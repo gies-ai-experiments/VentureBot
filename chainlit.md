@@ -1,14 +1,57 @@
-# Welcome to Chainlit! 🚀🤖
+# 🚀 VentureBots AI Coaching
 
-Hi there, Developer! 👋 We're excited to have you on board. Chainlit is a powerful tool designed to help you prototype, debug and share applications built on top of LLMs.
+<div style="text-align: center; padding: 20px;">
 
-## Useful Links 🔗
+## Welcome to Your AI Entrepreneurship Coach! 
 
-- **Documentation:** Get started with our comprehensive [Chainlit Documentation](https://docs.chainlit.io) 📚
-- **Discord Community:** Join our friendly [Chainlit Discord](https://discord.gg/k73SQ3FyUh) to ask questions, share your projects, and connect with other developers! 💬
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
 
-We can't wait to see what you create with Chainlit! Happy coding! 💻😊
+### 🤖 Getting Ready to Help You...
 
-## Welcome screen
+**Your AI coaching team is initializing...**
 
-To modify the welcome screen, edit the `chainlit.md` file at the root of your project. If you do not want a welcome screen, just leave this file empty.
+*This may take a few moments as we prepare your personalized entrepreneurship experience*
+
+</div>
+
+### What VentureBots Can Help You With:
+
+- 💡 **Innovative Business Ideas** - Generate creative startup concepts
+- ✅ **Idea Validation** - Test and refine your business concepts  
+- 📋 **Product Strategy** - Plan your product development journey
+- 🎯 **Prompt Engineering** - Craft effective AI prompts
+- 🚀 **Startup Guidance** - Navigate the entrepreneurship landscape
+
+<div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center;">
+
+### <span style="animation: pulse 2s infinite;">🔄</span> Please Wait...
+
+<div style="display: inline-block; font-size: 2em; margin: 10px 0;">
+<span style="animation: bounce 1.5s infinite 0.1s;">.</span>
+<span style="animation: bounce 1.5s infinite 0.2s;">.</span>
+<span style="animation: bounce 1.5s infinite 0.3s;">.</span>
+</div>
+
+**Your AI coaches are connecting and preparing to provide you with personalized guidance.**
+
+*The chat will be ready shortly!*
+
+</div>
+
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+</style>
+
+---
+
+*Powered by Google Agent Development Kit & Chainlit*
+
+</div>
