@@ -22,7 +22,7 @@ allow_origins = ["*"]
 prompt_playground = false
 
 # Process and display HTML in messages. This can be a security risk (see https://stackoverflow.com/questions/19603097/why-is-it-dangerous-to-render-user-generated-html-or-javascript)
-unsafe_allow_html = true
+unsafe_allow_html = false
 
 # Process and display mathematical expressions. This can clash with "$" characters in messages.
 latex = false
@@ -32,20 +32,20 @@ auto_tag_thread = true
 
 # Authorize users to upload files with messages
 [features.multi_modal]
-enabled = true
+enabled = false
 accept = ["text/plain", "application/pdf"]
-max_files = 20
-max_size_mb = 500
+max_files = 5
+max_size_mb = 5
 
 [UI]
 # Name of the app and chatbot.
-name = "VentureBots"
+name = "VentureBot"
 
 # Show the readme while the thread is empty.
 show_readme_as_default = true
 
 # Description of the app and chatbot. This is used for HTML tags.
-description = "AI-powered entrepreneurship coaching platform"
+description = "AI-powered entrepreneurship coaching platform by @AgentLab at Gies"
 
 # Large size content are by default collapsed for a cleaner ui
 default_collapse_content = true
@@ -57,7 +57,7 @@ default_expand_messages = false
 hide_cot = false
 
 # Link to your github repo. This will add a github button in the UI's header.
-# github = ""
+github = "https://github.com/gies-ai-experiments/VentureBot"
 
 # Specify a CSS file that can be used to customize the user interface.
 # The CSS file can be served from the public directory or via an external link.
