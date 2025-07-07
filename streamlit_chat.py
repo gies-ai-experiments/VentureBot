@@ -13,165 +13,264 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- Responsive CSS for mobile/tablet friendliness ---
-st.markdown(
-    """
-    <style>
-    /* Make chat input sticky on mobile for thumb reach */
-    @media (max-width: 768px) {
-        div[data-testid="stChatInput"] {
-            position: sticky;
-            bottom: env(safe-area-inset-bottom, 0);
-            z-index: 2;
-            background: #222 !important;
-        }
-        /* Hide sidebar by default, show with toggle */
-        section[data-testid="stSidebar"] {
-            display: none;
-        }
-        /* Reduce padding and font size for chat bubbles */
-        .element-container, .stChatMessage {
-            padding: 0.5rem !important;
-        }
-        .stChatMessage {
-            font-size: 1rem !important;
-        }
+# Clean, modern CSS
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+        --primary: #2563eb;
+        --primary-light: #3b82f6;
+        --success: #10b981;
+        --error: #ef4444;
+        --warning: #f59e0b;
+        --background: #0f172a;
+        --surface: #1e293b;
+        --surface-light: #334155;
+        --text: #f8fafc;
+        --text-muted: #64748b;
+        --border: #334155;
+        --shadow: rgba(0, 0, 0, 0.25);
     }
-    /* General chat bubble styling for all screens */
-    .stChatMessage {
-        border-radius: 16px;
-        margin-bottom: 0.5rem;
+    
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .stApp {
+        background: var(--background);
+        color: var(--text);
+    }
+    
+    .stApp > header, #MainMenu, footer {
+        display: none !important;
+    }
+    
+    .main-header {
+        background: linear-gradient(135deg, var(--primary), var(--success));
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 8px 32px var(--shadow);
+    }
+    
+    .main-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .main-header p {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .status-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
         padding: 1rem;
-        background: #222 !important;
-        color: #f1f1f1 !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
-    /* Light mode overrides - white text for chat bubbles */
-    /* When Streamlit is in light mode, ensure chat text is white */
+    
+    .status-connected {
+        border-left: 4px solid var(--success);
+    }
+    
+    .status-error {
+        border-left: 4px solid var(--error);
+    }
+    
     .stChatMessage {
-        color: white !important;
-    }
-    .stChatMessage[data-testid="stChatMessage-user"] {
-        color: white !important;
-    }
-    .stChatMessage[data-testid="stChatMessage-assistant"] {
-        color: white !important;
-    }
-    /* User and assistant color distinction */
-    .stChatMessage[data-testid="stChatMessage-user"] {
-        background: linear-gradient(135deg, #333 0%, #444 100%) !important;
-        border-left: 4px solid #00acc1;
-        color: #f1f1f1 !important;
-    }
-    .stChatMessage[data-testid="stChatMessage-assistant"] {
-        background: linear-gradient(135deg, #23272e 0%, #2c313a 100%) !important;
-        border-left: 4px solid #fbc02d;
-        color: #f1f1f1 !important;
-    }
-    /* Force consistent chat input styling - override all possible changes */
-    div[data-testid="stChatInput"],
-    div[data-testid="stChatInput"] *,
-    div[data-testid="stChatInputContainer"],
-    div[data-testid="stChatInputContainer"] * {
-        height: auto !important;
-        min-height: 140px !important;
-        max-height: 240px !important;
-        box-sizing: border-box !important;
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        box-shadow: 0 2px 8px var(--shadow) !important;
     }
     
-    /* Remove the outer grey shadow wrapper - only dark chat input remains */
-    div[data-testid="stChatInput"] {
-        background: #23272e !important;
-        border-radius: 20px !important;
-        width: 100%;
-        box-sizing: border-box !important;
-        min-height: 120px !important;
-        max-width: 100%;
-        margin: 0 !important;
-        box-shadow: none !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 0 !important;
+    .stChatMessage[data-testid="stChatMessage-user"] {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light)) !important;
+        border: none !important;
+        margin-left: 2rem !important;
     }
-    textarea[data-testid="stChatInputTextArea"],
-    textarea[data-testid="stChatInputTextArea"]:focus,
-    textarea[data-testid="stChatInputTextArea"]:active,
-    textarea[data-testid="stChatInputTextArea"]:hover {
-        min-height: 120px !important;
-        max-height: 120px !important;
-        height: 120px !important;
-        width: 100% !important;
-        margin: 0 !important;
-        display: block !important;
-        font-size: 1.2rem !important;
+    
+    .stChatMessage[data-testid="stChatMessage-assistant"] {
+        background: var(--surface) !important;
+        border-left: 4px solid var(--success) !important;
+        margin-right: 2rem !important;
+    }
+    
+    .stChatMessage p,
+    .stChatMessage div,
+    .stChatMessage span {
+        color: var(--text) !important;
+        line-height: 1.6;
+    }
+    
+    .stChatMessage[data-testid="stChatMessage-user"] p,
+    .stChatMessage[data-testid="stChatMessage-user"] div,
+    .stChatMessage[data-testid="stChatMessage-user"] span {
+        color: white !important;
+    }
+    
+    div[data-testid="stChatInput"] {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 16px var(--shadow) !important;
+    }
+    
+    div[data-testid="stChatInput"] textarea {
+        background: var(--surface) !important;
+        border: none !important;
+        color: var(--text) !important;
+        font-size: 1rem !important;
         padding: 1rem !important;
-        background: #23272e !important;
-        color: #f1f1f1 !important;
-        border-radius: 20px !important;
-        border: 1px solid #444 !important;
-        box-shadow: none !important;
-        resize: none !important;
-        caret-color: white !important;
-        overflow-y: auto !important;
-        box-sizing: border-box !important;
-        line-height: 1.5 !important;
-        font-family: inherit !important;
-        text-align: left !important;
-    }
-    div[data-testid^="stChatInput"] button {
-        align-self: center !important;
-        margin: 0 16px 0 0 !important;
+        border-radius: 8px !important;
     }
     
-    /* Prevent any dynamic height changes */
-    div[data-testid="stChatInput"] {
-        transition: none !important;
-        animation: none !important;
+    div[data-testid="stChatInput"] textarea::placeholder {
+        color: var(--text-muted) !important;
+        opacity: 0.8 !important;
     }
     
-    textarea[data-testid="stChatInputTextArea"] {
-        transition: none !important;
-        animation: none !important;
+    div[data-testid="stChatInput"] textarea:focus {
+        outline: none !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
     }
-    /* Placeholder text styling for chat input */
-    textarea[data-testid="stChatInputTextArea"]::placeholder {
-        color: #f1f1f1 !important;
-        opacity: 0.7;
-    }
-    /* Ensure chat output text is white in light mode */
-    .stChatMessage p, .stChatMessage div, .stChatMessage span {
+    
+    .stButton > button {
+        background: var(--primary) !important;
         color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        padding: 0.75rem 1.5rem !important;
+        transition: all 0.2s ease !important;
     }
-    /* Override any Streamlit default text colors in chat messages */
-    .stChatMessage * {
+    
+    .stButton > button:hover {
+        background: var(--primary-light) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px var(--shadow) !important;
+    }
+    
+    .stSidebar {
+        background: var(--surface) !important;
+        border-right: 1px solid var(--border) !important;
+    }
+    
+    .stSidebar .stMarkdown {
+        color: var(--text) !important;
+    }
+    
+    .stSuccess {
+        background: var(--success) !important;
         color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
     }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+    
+    .stError {
+        background: var(--error) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+    }
+    
+    .stWarning {
+        background: var(--warning) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+    }
+    
+    .stInfo {
+        background: var(--primary) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+    }
+    
+    .loading-dots {
+        display: inline-block;
+        position: relative;
+        width: 64px;
+        height: 20px;
+    }
+    
+    .loading-dots div {
+        position: absolute;
+        top: 6px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary);
+        animation: loading 1.2s linear infinite;
+    }
+    
+    .loading-dots div:nth-child(1) { left: 8px; animation-delay: 0s; }
+    .loading-dots div:nth-child(2) { left: 28px; animation-delay: -0.4s; }
+    .loading-dots div:nth-child(3) { left: 48px; animation-delay: -0.8s; }
+    
+    @keyframes loading {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
+    
+    @media (max-width: 768px) {
+        .main-header {
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .main-header h1 {
+            font-size: 2rem;
+        }
+        
+        .stChatMessage {
+            padding: 1rem !important;
+            margin: 0.5rem 0 !important;
+        }
+        
+        .stChatMessage[data-testid="stChatMessage-user"] {
+            margin-left: 0.5rem !important;
+        }
+        
+        .stChatMessage[data-testid="stChatMessage-assistant"] {
+            margin-right: 0.5rem !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Configuration
-# Use environment variable for backend URL, fallback to localhost
 ADK_SERVER_URL = os.getenv("ADK_BACKEND_URL", "http://localhost:8000")
-
 APP_NAME = "manager"
 
-def create_session(user_id, session_id, initial_state=None):
+def create_session(user_id, session_id):
     """Create a new ADK session"""
-    if initial_state is None:
-        initial_state = {
-            "initialized": True,
-            "timestamp": datetime.now().isoformat()
-        }
+    initial_state = {
+        "initialized": True,
+        "timestamp": datetime.now().isoformat()
+    }
     
     url = f"{ADK_SERVER_URL}/apps/{APP_NAME}/users/{user_id}/sessions/{session_id}"
     payload = {"state": initial_state}
     
     try:
         response = requests.post(url, json=payload, timeout=10)
-        if response.status_code in [200, 201, 409]:  # 409 means session already exists
+        if response.status_code in [200, 201, 409]:
             return True, "Session created successfully"
         else:
             return False, f"Failed to create session: {response.text}"
@@ -188,9 +287,7 @@ def send_message_stream(user_id, session_id, message):
         "body": message,
         "new_message": {
             "role": "user",
-            "parts": [{
-                "text": message
-            }]
+            "parts": [{"text": message}]
         },
         "streaming": True
     }
@@ -204,39 +301,19 @@ def send_message_stream(user_id, session_id, message):
     except requests.exceptions.RequestException as e:
         return False, f"Connection error: {str(e)}"
 
-def parse_sse_stream(response):
-    """Parse Server-Sent Events stream"""
-    events = []
-    for line in response.iter_lines(decode_unicode=True):
-        if line.startswith('data: '):
-            try:
-                event_data = json.loads(line[6:])  # Remove 'data: ' prefix
-                events.append(event_data)
-            except json.JSONDecodeError:
-                continue
-    return events
-
-def parse_agent_response(events):
-    """Parse ADK events to extract agent response"""
-    agent_response = ""
-    function_calls = []
-    
-    for event in events:
-        if event.get("content") and event["content"].get("parts"):
-            for part in event["content"]["parts"]:
-                # Extract text responses from model
-                if part.get("text") and event["content"].get("role") == "model":
-                    agent_response += part["text"]
-                
-                # Track function calls
-                elif part.get("functionCall"):
-                    func_call = part["functionCall"]
-                    function_calls.append(f"🔧 Called: {func_call.get('name')}({json.dumps(func_call.get('args', {}))})")
-    
-    return agent_response.strip(), function_calls
+def show_connection_status():
+    """Show connection status"""
+    try:
+        response = requests.get(f"{ADK_SERVER_URL}/docs", timeout=5)
+        if response.status_code == 200:
+            return "🟢 Connected", True
+        else:
+            return "🟡 Connection Issues", False
+    except:
+        return "🔴 Disconnected", False
 
 def initialize_session():
-    """Initialize session state variables"""
+    """Initialize session state"""
     if "session_created" not in st.session_state:
         st.session_state.session_created = False
     if "messages" not in st.session_state:
@@ -247,105 +324,122 @@ def initialize_session():
         st.session_state.session_id = f"session_{int(time.time())}"
 
 def main():
-    st.title("🚀 VentureBots - AI Entrepreneurship Coach")
-    
     # Initialize session
     initialize_session()
     
-    # Sidebar configuration
-    with st.sidebar:
-        st.header("🎓 Learning Session")
-        st.write("**VentureBots by AgentLab @ Gies College**")
-        st.write(f"**Coach:** {APP_NAME}")
-        st.write(f"**Student ID:** {st.session_state.user_id}")
-        st.write(f"**Session ID:** {st.session_state.session_id}")
-        st.divider()
-        st.write("**Server:** " + ADK_SERVER_URL.replace("http://", "").replace("https://", ""))
-        
-        if st.button("🔄 New Learning Session"):
-            st.session_state.messages = []
-            st.session_state.session_created = False
-            st.session_state.user_id = f"user_{int(time.time())}"
-            st.session_state.session_id = f"session_{int(time.time())}"
-            st.rerun()
-        
-        # Session status
-        if st.session_state.session_created:
-            st.success("✅ Coaching Session Active")
-        else:
-            st.warning("⏳ Connecting to AI Coaches...")
+    # Header
+    st.markdown("""
+    <div class="main-header">
+        <h1>🚀 VentureBots</h1>
+        <p>AI Entrepreneurship Coach</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Connection status
+    connection_status, is_connected = show_connection_status()
+    status_class = "status-connected" if is_connected else "status-error"
+    
+    st.markdown(f"""
+    <div class="status-card {status_class}">
+        <div>{connection_status}</div>
+        <div style="margin-left: auto; font-size: 0.9rem; color: var(--text-muted);">
+            Session: {st.session_state.session_id[-6:]}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Create session if not already created
     if not st.session_state.session_created:
-        with st.spinner("Creating session and connecting to VentureBots coaching team..."):
+        with st.container():
+            st.markdown("""
+            <div class="status-card">
+                <div class="loading-dots">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div>Initializing your coaching session...</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
             success, message = create_session(st.session_state.user_id, st.session_state.session_id)
+            
             if success:
                 st.session_state.session_created = True
                 
-                # Send greeting to trigger onboarding agent
+                # Send initial greeting
                 success, response = send_message_stream(
                     st.session_state.user_id,
                     st.session_state.session_id,
-                    "hi"  # Send greeting to trigger onboarding
+                    "hi"
                 )
                 
                 if success:
-                    # Process the onboarding response
+                    # Process onboarding response
                     streaming_text = ""
-                    try:
-                        for line in response.iter_lines(decode_unicode=True):
-                            if line.startswith('data: '):
-                                try:
-                                    event_data = json.loads(line[6:])
-                                    if event_data.get("content") and event_data["content"].get("parts"):
-                                        for part in event_data["content"]["parts"]:
-                                            if part.get("text") and event_data["content"].get("role") == "model":
-                                                new_text = part["text"]
-                                                if event_data.get("partial", False):
-                                                    streaming_text += new_text
-                                                else:
-                                                    streaming_text = new_text
-                                except json.JSONDecodeError:
-                                    continue
-                        
-                        # Add onboarding response to messages
-                        if streaming_text.strip():
-                            st.session_state.messages.append({
-                                "role": "assistant",
-                                "content": streaming_text.strip(),
-                                "timestamp": datetime.now()
-                            })
-                    except Exception as e:
-                        st.error(f"Failed to get onboarding response: {str(e)}")
+                    for line in response.iter_lines(decode_unicode=True):
+                        if line.startswith('data: '):
+                            try:
+                                event_data = json.loads(line[6:])
+                                if event_data.get("content") and event_data["content"].get("parts"):
+                                    for part in event_data["content"]["parts"]:
+                                        if part.get("text") and event_data["content"].get("role") == "model":
+                                            new_text = part["text"]
+                                            if event_data.get("partial", False):
+                                                streaming_text += new_text
+                                            else:
+                                                streaming_text = new_text
+                            except json.JSONDecodeError:
+                                continue
+                    
+                    # Add onboarding message
+                    if streaming_text.strip():
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": streaming_text.strip(),
+                            "timestamp": datetime.now()
+                        })
                 
                 st.rerun()
             else:
-                st.error(f"Failed to create session: {message}")
+                st.error(f"❌ Connection failed: {message}")
+                if st.button("🔄 Retry"):
+                    st.rerun()
                 st.stop()
     
-    # Display chat messages
+    # Display messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
     
     # Chat input
-    if prompt := st.chat_input("Share your entrepreneurship ideas or ask for coaching guidance...", disabled=not st.session_state.session_created):
-        # Add user message to chat
-        user_message = {
+    if prompt := st.chat_input(
+        "Share your entrepreneurship ideas or ask for coaching guidance...",
+        disabled=not st.session_state.session_created
+    ):
+        # Add user message
+        st.session_state.messages.append({
             "role": "user",
             "content": prompt,
             "timestamp": datetime.now()
-        }
-        st.session_state.messages.append(user_message)
+        })
         
         # Display user message
         with st.chat_message("user"):
             st.write(prompt)
         
-        # Send message to ADK agent with streaming
+        # Send message and get response
         with st.chat_message("assistant"):
-            # Create placeholder for streaming response
             response_placeholder = st.empty()
+            
+            # Show loading
+            response_placeholder.markdown("""
+            <div class="loading-dots">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            """, unsafe_allow_html=True)
             
             success, response = send_message_stream(
                 st.session_state.user_id,
@@ -354,68 +448,78 @@ def main():
             )
             
             if success:
-                # Initialize streaming response
                 streaming_text = ""
-                response_placeholder.write("🤔 Your AI coach is thinking...")
+                first_content = False
                 
-                try:
-                    # Process SSE stream in real-time
-                    for line in response.iter_lines(decode_unicode=True):
-                        if line.startswith('data: '):
-                            try:
-                                event_data = json.loads(line[6:])  # Remove 'data: ' prefix
-                                
-                                # Extract text from the event
-                                if event_data.get("content") and event_data["content"].get("parts"):
-                                    for part in event_data["content"]["parts"]:
-                                        if part.get("text") and event_data["content"].get("role") == "model":
-                                            new_text = part["text"]
-                                            # For partial responses, append; for complete responses, use as-is
-                                            if event_data.get("partial", False):
-                                                streaming_text += new_text
-                                            else:
-                                                streaming_text = new_text  # Complete response
-                                            # Update the display in real-time
-                                            response_placeholder.write(streaming_text)
+                for line in response.iter_lines(decode_unicode=True):
+                    if line.startswith('data: '):
+                        try:
+                            event_data = json.loads(line[6:])
+                            if event_data.get("content") and event_data["content"].get("parts"):
+                                for part in event_data["content"]["parts"]:
+                                    if part.get("text") and event_data["content"].get("role") == "model":
+                                        new_text = part["text"]
+                                        
+                                        if not first_content:
+                                            first_content = True
+                                            response_placeholder.empty()
+                                        
+                                        if event_data.get("partial", False):
+                                            streaming_text += new_text
+                                        else:
+                                            streaming_text = new_text
                                             
-                            except json.JSONDecodeError:
-                                continue
-                    
-                    # Final response
-                    final_response = streaming_text.strip() if streaming_text.strip() else "I processed your request but have no text response."
-                    response_placeholder.write(final_response)
-                    
-                    # Add assistant message to history
-                    assistant_message = {
-                        "role": "assistant",
-                        "content": final_response,
-                        "timestamp": datetime.now()
-                    }
-                    st.session_state.messages.append(assistant_message)
-                    
-                except Exception as e:
-                    error_msg = f"❌ Streaming Error: {str(e)}"
-                    response_placeholder.error(error_msg)
-                    
-                    # Add error message to history
-                    error_message = {
-                        "role": "assistant",
-                        "content": error_msg,
-                        "timestamp": datetime.now()
-                    }
-                    st.session_state.messages.append(error_message)
-            
-            else:
-                error_msg = f"❌ Error: {response}"
-                st.error(error_msg)
+                                        response_placeholder.write(streaming_text)
+                        except json.JSONDecodeError:
+                            continue
                 
-                # Add error message to history
-                error_message = {
+                # Add response to messages
+                final_response = streaming_text.strip() if streaming_text.strip() else "I processed your request but have no text response."
+                st.session_state.messages.append({
                     "role": "assistant",
-                    "content": error_msg,
+                    "content": final_response,
                     "timestamp": datetime.now()
-                }
-                st.session_state.messages.append(error_message)
+                })
+                
+            else:
+                response_placeholder.error(f"❌ Error: {response}")
+                if st.button("🔄 Retry"):
+                    st.rerun()
+    
+    # Sidebar
+    with st.sidebar:
+        st.markdown("### 🎓 Session Info")
+        st.write(f"**User ID:** `{st.session_state.user_id}`")
+        st.write(f"**Session:** `{st.session_state.session_id}`")
+        
+        if st.session_state.messages:
+            user_msgs = len([m for m in st.session_state.messages if m["role"] == "user"])
+            ai_msgs = len([m for m in st.session_state.messages if m["role"] == "assistant"])
+            st.write(f"**Messages:** {user_msgs} sent, {ai_msgs} received")
+        
+        st.divider()
+        
+        if st.button("🔄 New Session", use_container_width=True):
+            st.session_state.messages = []
+            st.session_state.session_created = False
+            st.session_state.user_id = f"user_{int(time.time())}"
+            st.session_state.session_id = f"session_{int(time.time())}"
+            st.rerun()
+        
+        if st.button("💾 Export Chat", use_container_width=True):
+            if st.session_state.messages:
+                export_text = "\n".join([
+                    f"**{msg['role'].title()}:** {msg['content']}\n"
+                    for msg in st.session_state.messages
+                ])
+                st.download_button(
+                    label="📥 Download",
+                    data=export_text,
+                    file_name=f"venturebot_chat_{st.session_state.session_id}.txt",
+                    mime="text/plain"
+                )
+            else:
+                st.info("No messages to export")
 
 if __name__ == "__main__":
     main()
