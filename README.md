@@ -1,6 +1,6 @@
-# VentureBots
+# VentureBots - AI Entrepreneurship Coach 🚀
 
-An AI-powered entrepreneurship coach that guides students through the startup journey — from idea to pitch — using a team of intelligent agents developed by VentureBot at Gies College of Business.
+A multi-agent AI coaching platform for entrepreneurship education, built with Google ADK and enhanced Streamlit interface.
 
 ## Project Overview
 
@@ -75,39 +75,73 @@ VentureBots consists of several specialized coaching agents:
    - **OpenAI API**: Alternative LLM provider option
    - **SerpAPI**: Used for competitive search and market research
 
-## Running the Application
+## Quick Start
 
-VentureBots provides multiple interfaces to interact with the AI coaching agents. Choose the interface that best fits your learning needs.
+### Prerequisites
+- Python 3.12+
+- ANTHROPIC_API_KEY in `.env` file
+- Virtual environment already set up in `agent_venv/`
 
-### Option 1: Streamlit Chat Interface (🔥 Recommended)
+### 🚀 Start VentureBots (2 commands)
 
-The Streamlit interface provides a modern ChatGPT-like experience with real-time streaming responses. This is the **easiest and most user-friendly** way to interact with VentureBots for entrepreneurship coaching.
-
-**Step 1: Start the Backend (ADK Server)**
 ```bash
-# Navigate to the manager directory
-cd manager
+# 1. Test imports first (recommended)
+python test_imports.py
 
-# Start the ADK API server on port 8000
-adk api_server --port 8000
+# 2. Start Backend (Port 8000)
+PORT=8000 python main.py
+
+# 3. Start Frontend (Port 8501) - New Terminal
+agent_venv/bin/python -m streamlit run streamlit_chat.py --server.port 8501
 ```
 
-**Step 2: Install Streamlit Dependencies**
+**Access:** http://localhost:8501
+
+## Enhanced Features
+
+### Frontend Improvements ✨
+- 📱 **Mobile-responsive design** with touch-friendly interface
+- ⚡ **Real-time streaming** AI responses with typing indicators
+- 💾 **Auto-save chat history** with manual export options
+- 🔄 **Better error handling** with retry mechanisms
+- 📊 **Connection status** monitoring and diagnostics
+- 🎨 **Modern UI** with gradient styling and smooth animations
+
+### AI Multi-Agent Workflow 🤖
+- 🤝 **Onboarding Agent** - Welcomes users and collects preferences
+- 💡 **Idea Generator** - Creates innovative startup concepts
+- ✅ **Validator Agent** - Evaluates and refines ideas
+- 📋 **Product Manager** - Guides product development
+- 🛠️ **Prompt Engineer** - Helps craft AI prompts
+
+## Troubleshooting
+
+### 🩺 Pre-Flight Check (Run First)
 ```bash
-# Install Streamlit requirements (from project root)
-pip install -r requirements_streamlit.txt
+python test_imports.py
 ```
 
-**Step 3: Start the Streamlit Frontend**
+### Common Issues & Quick Fixes
+
+**Issue: "No text response" from AI**
 ```bash
-# Start the Streamlit chat interface
-streamlit run streamlit_chat.py
+# Fix: Check imports and restart backend
+python test_imports.py
+PORT=8000 python main.py
 ```
 
-**Step 4: Access the Chat Interface**
-- Open your browser to `http://localhost:8501`
-- The interface will automatically create a session and connect to VentureBots
-- Start your entrepreneurship coaching journey with your AI agents immediately
+**Issue: Connection refused**
+```bash
+# Fix: Verify services are running
+lsof -i :8000  # Backend
+lsof -i :8501  # Frontend
+```
+
+**Issue: Import errors**
+```bash
+# Fix: Ensure correct import paths in sub-agents
+# All sub-agents should use: from manager.tools.tools import
+```
 
 ### Option 2: ADK Web Interface
 

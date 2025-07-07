@@ -6,7 +6,10 @@
       "Bash(git for-each-ref:*)",
       "Bash(git checkout:*)",
       "Bash(diff:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }
