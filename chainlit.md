@@ -1,57 +1,73 @@
-# 🚀 VentureBots AI Coaching
+# 🚀 VentureBots - Chainlit Interface
 
-<div style="text-align: center; padding: 20px;">
+Welcome to **VentureBots**, your AI-powered entrepreneurship coaching platform! This interface connects you with a team of specialized AI coaches to help you succeed in your entrepreneurial journey.
 
-## Welcome to Your AI Entrepreneurship Coach! 
+## 🎯 What VentureBots Can Help You With
 
-<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+### 💡 Idea Generation
+- Brainstorm innovative business concepts
+- Explore market opportunities
+- Generate creative solutions to problems
 
-### 🤖 Getting Ready to Help You...
+### ✅ Idea Validation
+- Assess market viability
+- Identify potential risks and challenges
+- Get feedback on your business concepts
 
-**Your AI coaching team is initializing...**
+### 📋 Product Management
+- Develop product roadmaps
+- Define features and requirements
+- Plan development strategies
 
-*This may take a few moments as we prepare your personalized entrepreneurship experience*
+### 🎯 Prompt Engineering
+- Craft effective AI prompts
+- Optimize AI interactions
+- Learn best practices for AI tools
 
-</div>
+## 🚀 Getting Started
 
-### What VentureBots Can Help You With:
+1. **Share Your Interests**: Tell us about your passions, skills, or industry interests
+2. **Explore Ideas**: Let our AI coaches help you brainstorm business opportunities
+3. **Validate Concepts**: Get expert feedback on your ideas
+4. **Develop Plans**: Create actionable strategies for your venture
 
-- 💡 **Innovative Business Ideas** - Generate creative startup concepts
-- ✅ **Idea Validation** - Test and refine your business concepts  
-- 📋 **Product Strategy** - Plan your product development journey
-- 🎯 **Prompt Engineering** - Craft effective AI prompts
-- 🚀 **Startup Guidance** - Navigate the entrepreneurship landscape
+## 💬 How to Interact
 
-<div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center;">
+- **Be Specific**: The more details you provide, the better our coaches can help
+- **Ask Questions**: Don't hesitate to ask for clarification or deeper insights
+- **Iterate**: Refine your ideas based on the feedback you receive
+- **Explore**: Try different approaches and perspectives
 
-### <span style="animation: pulse 2s infinite;">🔄</span> Please Wait...
+## 🎓 Example Conversations
 
-<div style="display: inline-block; font-size: 2em; margin: 10px 0;">
-<span style="animation: bounce 1.5s infinite 0.1s;">.</span>
-<span style="animation: bounce 1.5s infinite 0.2s;">.</span>
-<span style="animation: bounce 1.5s infinite 0.3s;">.</span>
-</div>
+**Getting Started:**
+- "I'm interested in sustainable technology. What business opportunities exist in this space?"
+- "I have an idea for a mobile app that helps people track their carbon footprint. Can you help me validate this concept?"
 
-**Your AI coaches are connecting and preparing to provide you with personalized guidance.**
+**Idea Development:**
+- "How can I differentiate my product from existing competitors?"
+- "What are the key features I should focus on for my MVP?"
 
-*The chat will be ready shortly!*
+**Business Strategy:**
+- "What marketing strategies would work best for my target audience?"
+- "How should I price my product or service?"
 
-</div>
+## 🔧 Technical Features
 
-<style>
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
+- **Real-time Streaming**: Get responses as they're generated
+- **Multi-Agent System**: Specialized coaches for different aspects of entrepreneurship
+- **Session Memory**: Your conversation context is maintained throughout the session
+- **Professional Interface**: Clean, modern design optimized for productive conversations
 
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-</style>
+## 🌟 Tips for Best Results
+
+1. **Provide Context**: Share relevant background information about yourself or your situation
+2. **Be Open to Feedback**: Our coaches might challenge your assumptions to help you think differently
+3. **Ask Follow-up Questions**: Dive deeper into topics that interest you
+4. **Save Important Insights**: Take notes on valuable advice and recommendations
+
+Ready to start your entrepreneurial journey? Begin by introducing yourself or sharing an idea you'd like to explore!
 
 ---
 
-*Powered by Google Agent Development Kit & Chainlit*
-
-</div>
+*Powered by Google Agent Development Kit (ADK) and Claude AI*
