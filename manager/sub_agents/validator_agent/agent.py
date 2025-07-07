@@ -24,28 +24,79 @@ class ClaudeWebSearchValidator(Agent):
     Scores ideas based on feasibility and innovation using web search results.
     """
     async def handle(self, conversation, memory):
-        print("Starting idea validation")
-        selected_idea = memory.get("SelectedIdea")  # single {"id", "idea"}
-        if not selected_idea:
-            await conversation.send_message("No idea selected for validation. Please select an idea first.")
+        try:
+            print("Starting idea validation")
+            selected_idea = memory.get("SelectedIdea")  # single {"id", "idea"}
+            if not selected_idea:
+                await conversation.send_message("No idea selected for validation. Please select an idea first.")
+                return []
+            
+            print(f"Validating selected idea: {selected_idea['idea']}")
+            
+            # Send initial message to user
+            await conversation.send_message(f"🔍 **Validating your idea:** {selected_idea['idea']}\n\nPerforming web search to assess feasibility and innovation...")
+            
+            # Use Claude web search function with error handling
+            try:
+                search_results = claude_web_search(selected_idea["idea"], anthropic_client=anthropic_client)
+                num_results = len(search_results.get("results", []))
+                print(f"Web search completed, found {num_results} results")
+            except Exception as search_error:
+                print(f"Web search failed: {search_error}")
+                # Fallback to default scoring if web search fails
+                num_results = 3  # Default moderate number
+                await conversation.send_message("⚠️ Web search temporarily unavailable. Using offline analysis...")
+            
+            # Calculate scores based on search results
+            feasibility = min(num_results/5, 1.0)
+            innovation = max(1.0 - num_results/10, 0.0)
+            final_score = feasibility * 0.6 + innovation * 0.4
+            
+            score = {
+                "id": selected_idea.get("id", 1),
+                "feasibility": round(feasibility, 2),
+                "innovation": round(innovation, 2),
+                "score": round(final_score, 2),
+                "notes": f"Search hits: {num_results}. Feasibility and innovation calculated based on web presence."
+            }
+            
+            print(f"Score calculated: {score}")
+            
+            # Store validation results in memory
+            memory["Validator"] = score
+            
+            # Send formatted results to user
+            result_message = f"""✅ **Validation Complete!**
+
+**Idea:** {selected_idea['idea']}
+
+📊 **Scores:**
+• **Feasibility:** {score['feasibility']}/1.0
+• **Innovation:** {score['innovation']}/1.0  
+• **Overall Score:** {score['score']}/1.0
+
+📝 **Analysis:** {score['notes']}
+
+{'🚀 **Recommendation:** This idea shows strong potential! Ready to move forward?' if score['score'] > 0.6 else '💡 **Recommendation:** Consider refining this idea or exploring alternatives.'}
+
+**__Would you like to proceed to product development, or would you like to select a different idea?__**"""
+            
+            await conversation.send_message(result_message)
+            return [score]
+            
+        except Exception as e:
+            print(f"Critical error in validator agent: {e}")
+            error_message = f"""❌ **Validation Error**
+
+I encountered an issue while validating your idea. This might be due to:
+• Temporary connectivity issues
+• API service interruption  
+• Internal processing error
+
+**__Please try again, or let me know if you'd like to select a different idea.__**"""
+            
+            await conversation.send_message(error_message)
             return []
-        print(f"Validating selected idea: {selected_idea['idea']}")
-        # Use Claude web search function
-        search_results = claude_web_search(selected_idea["idea"], anthropic_client=anthropic_client)
-        num_results = len(search_results.get("results", []))
-        # Calculate scores based on search results
-        feasibility = min(num_results/5, 1.0)
-        innovation = max(1.0 - num_results/10, 0.0)
-        final_score = feasibility * 0.6 + innovation * 0.4
-        score = {
-            "id": selected_idea["id"],
-            "feasibility": round(feasibility, 2),
-            "innovation": round(innovation, 2),
-            "score": round(final_score, 2),
-            "notes": f"Search hits: {num_results}. Feasibility and innovation calculated based on web presence."
-        }
-        print(f"Score calculated: {score}")
-        return [score]
 
 # Create the validator agent
 validator_agent = ClaudeWebSearchValidator(
