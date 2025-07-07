@@ -7,7 +7,7 @@
 # 4. Run the Docker container (ensure your .env file is in the same directory):
 #    docker run -d -p 80:80 --env-file .env --name venturebots-app venturebots
 # 5. Access the application in your browser at http://<YOUR_VM_IP_ADDRESS> or http://localhost if running locally.
-#    Frontend (Streamlit): http://<YOUR_VM_IP_ADDRESS>
+#    Frontend (Chainlit): http://<YOUR_VM_IP_ADDRESS>
 #    Backend API: http://<YOUR_VM_IP_ADDRESS>/api
 
 # Use an official Python runtime as a parent image
@@ -25,9 +25,9 @@ WORKDIR /app
 # Copy the entire project contents into the container at /app
 COPY . /app/
 
-# Install Python dependencies (both main and Streamlit requirements)
+# Install Python dependencies (both main and Chainlit requirements)
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements_streamlit.txt
+    pip install --no-cache-dir chainlit
 
 # Create a simple startup script to run both services
 RUN echo '#!/bin/bash\n\
@@ -52,9 +52,9 @@ fi\n\
 \n\
 echo "✅ ADK API server started successfully"\n\
 \n\
-# Start Streamlit on port 80 (foreground)\n\
-echo "🎨 Starting Streamlit frontend on port 80..."\n\
-exec streamlit run streamlit_chat.py --server.port 80 --server.address 0.0.0.0 --server.headless true\n\
+# Start Chainlit on port 80 (foreground)\n\
+echo "🎨 Starting Chainlit frontend on port 80..."\n\
+exec chainlit run chainlit_app.py --port 80 --host 0.0.0.0 --headless\n\
 ' > /app/start_services.sh && chmod +x /app/start_services.sh
 
 # Make port 80 available to the world outside this container

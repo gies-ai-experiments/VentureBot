@@ -137,7 +137,7 @@ jobs:
             docker run -d -p 80:80 --env-file .env -e ADK_BACKEND_URL=http://localhost:8000 --name $CONTAINER_NAME $IMAGE_NAME
             
             echo "--- Single container application started ---"
-            echo "Frontend (Streamlit): http://$(curl -s ifconfig.me)"
+            echo "Frontend (Chainlit): http://$(curl -s ifconfig.me)"
             echo "Backend API: Internal (both services in same container)"
 
             echo "--- Verifying single container startup ---"
@@ -151,8 +151,8 @@ jobs:
                 echo "--- Checking service health ---"
                 
                 # Check frontend health
-                if curl -f http://localhost/_stcore/health > /dev/null 2>&1; then
-                    echo "✅ Frontend (Streamlit) is healthy"
+                if curl -f http://localhost/ > /dev/null 2>&1; then
+                    echo "✅ Frontend (Chainlit) is healthy"
                 else
                     echo "❌ Frontend health check failed"
                 fi
