@@ -24,12 +24,12 @@ class ClaudeWebSearchValidator(Agent):
     Scores ideas based on feasibility and innovation using web search results.
     """
     async def handle(self, conversation, memory):
-        print.info("Starting idea validation")
+        print("Starting idea validation")
         selected_idea = memory.get("SelectedIdea")  # single {"id", "idea"}
         if not selected_idea:
             await conversation.send_message("No idea selected for validation. Please select an idea first.")
             return []
-        print.debug(f"Validating selected idea: {selected_idea['idea']}")
+        print(f"Validating selected idea: {selected_idea['idea']}")
         # Use Claude web search function
         search_results = claude_web_search(selected_idea["idea"], anthropic_client=anthropic_client)
         num_results = len(search_results.get("results", []))
@@ -44,7 +44,7 @@ class ClaudeWebSearchValidator(Agent):
             "score": round(final_score, 2),
             "notes": f"Search hits: {num_results}. Feasibility and innovation calculated based on web presence."
         }
-        print.debug(f"Score calculated: {score}")
+        print(f"Score calculated: {score}")
         return [score]
 
 # Create the validator agent

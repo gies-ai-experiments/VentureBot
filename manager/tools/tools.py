@@ -36,7 +36,7 @@ def claude_web_search(query: str, anthropic_client: anthropic.Anthropic) -> Dict
         logger.info(f"Performing web search for query: {query}")
         # Initial message with the search query
         message = anthropic_client.messages.create(
-            model="claude-3-7-sonnet-20250219", 
+            model="claude-3-5-sonnet-20241022", 
             max_tokens=4000,
             tools=[web_search_tool],
             messages=[
@@ -59,7 +59,7 @@ def claude_web_search(query: str, anthropic_client: anthropic.Anthropic) -> Dict
                 
                 # Continue the conversation to get search results
                 search_response = anthropic_client.messages.create(
-                    model="claude-3-7-sonnet-20250219",
+                    model="claude-3-5-sonnet-20241022",
                     max_tokens=5000,
                     messages=[
                         {
