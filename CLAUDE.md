@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-VentureBots is an AI-powered entrepreneurship coaching platform built with Google Agent Development Kit (ADK) and Streamlit. It provides multi-agent AI coaching for startup idea generation, validation, product development, and prompt engineering.
+VentureBots is an AI-powered entrepreneurship coaching platform built with Google Agent Development Kit (ADK) and Chainlit. It provides multi-agent AI coaching for startup idea generation, validation, product development, and prompt engineering.
 
 ## Architecture
 
