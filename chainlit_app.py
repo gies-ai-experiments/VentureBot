@@ -206,7 +206,7 @@ async def chat_profile():
     return [
         cl.ChatProfile(
             name="entrepreneurship",
-            markdown_description="**🚀 VentureBots Entrepreneurship Coach**\n\nYour AI-powered guide for startup success",
+            markdown_description="**🚀 VentureBots Entrepreneurship Coach**\n\nYour AI-powered guide for startup success. Give us a moment while we wake up the Manager :)",
             icon="🚀",
         )
     ]
