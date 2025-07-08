@@ -38,9 +38,9 @@ class StreamingVentureBotSession:
                 self.session_created = True
                 return True, "Session created successfully"
             else:
-                return False, f"Failed to create session: {response.text}"
+                return False, "🔄 Having trouble connecting to the coaching system. Please try again in a moment."
         except requests.exceptions.RequestException as e:
-            return False, f"Connection error: {str(e)}"
+            return False, "🌐 Unable to connect to the coaching system. Please check your internet connection and try again."
     
     async def send_message_stream(self, message: str) -> AsyncGenerator[str, None]:
         """Send message to ADK agent and yield streaming tokens"""
@@ -67,9 +67,9 @@ class StreamingVentureBotSession:
                 async for token in self._parse_streaming_tokens(response):
                     yield token
             else:
-                yield f"❌ API Error: {response.text}"
+                yield "🤖 I'm having trouble processing your request right now. Please try rephrasing your message or try again in a moment."
         except requests.exceptions.RequestException as e:
-            yield f"❌ Connection error: {str(e)}"
+            yield "🌐 I'm having trouble connecting to the coaching system. Please check your internet connection and try again."
     
     async def _parse_streaming_tokens(self, response) -> AsyncGenerator[str, None]:
         """Parse SSE streaming response and yield individual tokens"""
@@ -90,19 +90,29 @@ class StreamingVentureBotSession:
         
         # Now stream the complete response character by character
         if full_response.strip():
-            # Import validation utility
-            from streaming_utils import StreamingValidator
-            
-            # Validate and sanitize content
-            validation = StreamingValidator.validate_streaming_content(full_response)
-            if not validation["valid"]:
-                full_response = StreamingValidator.sanitize_streaming_content(full_response)
+            # Apply basic content sanitization (fallback if streaming_utils not available)
+            try:
+                from streaming_utils import StreamingValidator
+                
+                # Validate and sanitize content
+                validation = StreamingValidator.validate_streaming_content(full_response)
+                if not validation["valid"]:
+                    full_response = StreamingValidator.sanitize_streaming_content(full_response)
+            except ImportError:
+                # Fallback sanitization without streaming_utils
+                import re
+                # Convert HTML formatting to markdown
+                full_response = re.sub(r'<u>(.*?)</u>', r'**\1**', full_response, flags=re.IGNORECASE)
+                full_response = re.sub(r'<b>(.*?)</b>', r'**\1**', full_response, flags=re.IGNORECASE)
+                full_response = re.sub(r'<strong>(.*?)</strong>', r'**\1**', full_response, flags=re.IGNORECASE)
+                full_response = re.sub(r'<em>(.*?)</em>', r'*\1*', full_response, flags=re.IGNORECASE)
+                full_response = re.sub(r'<i>(.*?)</i>', r'*\1*', full_response, flags=re.IGNORECASE)
             
             for char in full_response:
                 yield char
                 await asyncio.sleep(0.01)  # Smooth streaming
         else:
-            yield "I processed your request but have no text response."
+            yield "🤔 I'm thinking about your request but need a moment to formulate a response. Could you please rephrase your question or try asking something specific about your business idea?"
 
 # Global session instance
 venture_session = StreamingVentureBotSession()
