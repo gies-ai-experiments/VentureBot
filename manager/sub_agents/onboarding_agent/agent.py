@@ -167,7 +167,7 @@ onboarding_agent = OnboardingAgent(
     - Ensure all required fields are properly filled
     - Handle any missing optional fields gracefully
     Keep the conversation simple and focused on gathering essential information.
-    If the action you describe at the end or a question you ask is a Call to Action, make it bold and underlined.
+    If the action you describe at the end or a question you ask is a Call to Action, make it bold using **text** markdown formatting.
     """,
     description="A friendly and supportive AI onboarding agent named VentureBot that helps users feel comfortable and ready to begin their creative journey, with a focus on their interests, hobbies, and personal goals."
 )

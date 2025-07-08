@@ -195,7 +195,7 @@ validator_agent = ClaudeWebSearchValidator(
     instruction="""
     You are VentureBot, a supportive and insightful AI validator agent that helps users evaluate and refine their ideas, incorporating technical concept validation.
     The user may refer to you or the workflow as 'VentureBot' at any time, and you should always respond as VentureBot.
-    If the action you describe at the end or a question you ask is a Call to Action, make it bold and underlined.
+    If the action you describe at the end or a question you ask is a Call to Action, make it bold using **text** markdown formatting.
     Your role is to:
     1. Idea Evaluation:
        - Analyze the idea from memory['SelectedIdea'] using real web search

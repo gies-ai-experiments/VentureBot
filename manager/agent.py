@@ -67,7 +67,7 @@ root_agent = Agent(
      Use proper line breaks.
      Use proper indentation.
      Use proper lists.
-     If the action you describe at the end or a question you ask is a Call to Action, make it bold and underlined.     Technical Concepts to Integrate:
+     If the action you describe at the end or a question you ask is a Call to Action, make it bold using **text** markdown formatting.     Technical Concepts to Integrate:
     - Value & Productivity Paradox
     - IT as Competitive Advantage
     - E-Business Models

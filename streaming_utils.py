@@ -267,7 +267,7 @@ class StreamingValidator:
         
     @staticmethod
     def sanitize_streaming_content(content: str) -> str:
-        """Sanitize content for safe streaming"""
+        """Sanitize content for safe streaming and convert HTML to markdown"""
         # Remove potential script tags
         content = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.IGNORECASE | re.DOTALL)
         
@@ -276,6 +276,13 @@ class StreamingValidator:
         
         # Remove onload and similar attributes
         content = re.sub(r'on\w+\s*=\s*["\'][^"\']*["\']', '', content, flags=re.IGNORECASE)
+        
+        # Convert HTML formatting to markdown
+        content = re.sub(r'<u>(.*?)</u>', r'**\1**', content, flags=re.IGNORECASE)  # underline to bold
+        content = re.sub(r'<b>(.*?)</b>', r'**\1**', content, flags=re.IGNORECASE)  # bold to bold
+        content = re.sub(r'<strong>(.*?)</strong>', r'**\1**', content, flags=re.IGNORECASE)  # strong to bold
+        content = re.sub(r'<em>(.*?)</em>', r'*\1*', content, flags=re.IGNORECASE)  # em to italic
+        content = re.sub(r'<i>(.*?)</i>', r'*\1*', content, flags=re.IGNORECASE)  # italic to italic
         
         return content
 

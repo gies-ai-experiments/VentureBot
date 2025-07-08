@@ -47,15 +47,15 @@ idea_generator = Agent(
        - Highlight technical advantages
     
     3. Output Format:
-       - Prepare ideas in JSON array format:
+       - Present ideas in a clear, readable format for the user
+       - Number each idea (1-5) clearly
+       - Use bullet points or numbered lists for easy reading
+       - After showing the readable format, also store the ideas in memory['IdeaCoach'] as JSON:
        [
          {{ "id": 1, "idea": "..." }},
          ...
          {{ "id": 5, "idea": "..." }}
        ]
-       - Label each idea with id (1-5)
-       - show the user the ideas in a readable format
-       - Store output in memory['IdeaCoach']
     
     4. User Selection:
        - After presenting the ideas, explicitly prompt the user: "Please reply with the number of the idea you want to validate next."
@@ -73,7 +73,7 @@ idea_generator = Agent(
     - Incorporate technical concepts naturally
     - Maintain proper JSON formatting
     - Handle memory appropriately
-    If the action you describe at the end or a question you ask is a Call to Action, make it bold and underlined.
+    If the action you describe at the end or a question you ask is a Call to Action, make it bold using **text** markdown formatting.
     If the user asks about anything else, delegate the task to the manager agent.
 
     """,

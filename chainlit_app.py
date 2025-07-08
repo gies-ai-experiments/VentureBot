@@ -83,13 +83,21 @@ class StreamingVentureBotSession:
                     if event_data.get("content") and event_data["content"].get("parts"):
                         for part in event_data["content"]["parts"]:
                             if part.get("text") and event_data["content"].get("role") == "model":
-                                full_response = part["text"]
+                                full_response += part["text"]
                                         
                 except json.JSONDecodeError:
                     continue
         
         # Now stream the complete response character by character
         if full_response.strip():
+            # Import validation utility
+            from streaming_utils import StreamingValidator
+            
+            # Validate and sanitize content
+            validation = StreamingValidator.validate_streaming_content(full_response)
+            if not validation["valid"]:
+                full_response = StreamingValidator.sanitize_streaming_content(full_response)
+            
             for char in full_response:
                 yield char
                 await asyncio.sleep(0.01)  # Smooth streaming
