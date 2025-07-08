@@ -4,8 +4,8 @@ services:
   # Backend - ADK API Server
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ..
+      dockerfile: docker/Dockerfile.backend
     image: venturebots-backend
     container_name: venturebots-backend
     ports:
@@ -20,11 +20,11 @@ services:
       retries: 3
       start_period: 40s
 
-  # Frontend - Streamlit
+  # Frontend - Chainlit
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
     image: venturebots-frontend
     container_name: venturebots-app
     ports:
@@ -35,7 +35,7 @@ services:
       - ADK_BACKEND_URL=https://venturebots.ncsa.ai:8000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/_stcore/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 30s
       timeout: 10s
       retries: 3

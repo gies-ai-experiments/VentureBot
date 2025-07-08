@@ -93,12 +93,13 @@ jobs:
             echo "Project dir: $PROJECT_DIR"
             # vi .env
             echo "--- Verifying Dockerfile exists ---"
-            if [ ! -f Dockerfile ]; then
-                echo "Dockerfile not found in $PROJECT_DIR after git operations! Listing files:"
+            if [ ! -f docker/Dockerfile ]; then
+                echo "Dockerfile not found in $PROJECT_DIR/docker/ after git operations! Listing files:"
                 ls -la
+                ls -la docker/
                 exit 1
             fi
-            echo "Dockerfile found."
+            echo "Dockerfile found in docker/ directory."
 
             echo "--- Checking for Docker Compose ---"
             COMPOSE_CMD=""
@@ -133,7 +134,7 @@ jobs:
             
             # Build and start single container with both services
             echo "Building and starting single container..."
-            docker build -t $IMAGE_NAME .
+            docker build -t $IMAGE_NAME -f docker/Dockerfile .
             docker run -d -p 80:80 --env-file .env -e ADK_BACKEND_URL=http://localhost:8000 --name $CONTAINER_NAME $IMAGE_NAME
             
             echo "--- Single container application started ---"

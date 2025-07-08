@@ -14,11 +14,11 @@ git pull origin main
 
 # Step 2: Stop current containers
 echo "🛑 Stopping current containers..."
-docker-compose down
+docker compose -f docker/docker-compose.yml down
 
 # Step 3: Build and deploy with fix
 echo "🔨 Building and deploying with backend connectivity fix..."
-docker-compose up --build -d
+docker compose -f docker/docker-compose.yml up --build -d
 
 # Step 4: Wait for services to start
 echo "⏳ Waiting for services to start..."
