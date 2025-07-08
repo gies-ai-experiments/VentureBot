@@ -8,22 +8,29 @@ This guide prevents the import errors and backend issues that commonly occur whe
 
 ```
 VentureBot/
-├── main.py                 # Main FastAPI server entry point
-├── streamlit_chat.py       # Enhanced frontend with improvements
-├── manager/                # Agent implementation directory
-│   ├── agent.py           # Root agent definition
-│   ├── config.yaml        # Agent configuration
+├── main.py                      # Main FastAPI server entry point
+├── chainlit_app.py              # Chainlit frontend interface
+├── test_imports.py              # Import validation tool
+├── test_enhanced_analysis.py    # Enhanced validation system tests
+├── test_live_system.py          # Live system integration tests
+├── manager/                     # Agent implementation directory
+│   ├── agent.py                # Root agent definition
+│   ├── config.yaml             # Agent configuration
 │   ├── tools/
-│   │   └── tools.py       # Shared tools for all agents
+│   │   ├── tools.py            # Enhanced web search utilities
+│   │   ├── market_analyzer.py  # Market intelligence engine
+│   │   └── dashboard_generator.py # Visual dashboard system
 │   └── sub_agents/
 │       ├── onboarding_agent/
 │       ├── product_manager/
-│       ├── validator_agent/
+│       ├── validator_agent/    # Enhanced with market intelligence
 │       ├── prompt_engineer/
 │       └── idea_generator/
-├── requirements.txt        # Backend dependencies
-├── requirements_streamlit.txt  # Frontend dependencies
-└── agent_venv/            # Virtual environment
+├── requirements.txt             # Backend dependencies
+├── requirements_chainlit.txt    # Frontend dependencies
+├── CLAUDE.md                   # Development memory & guide
+├── VENTUREBOT_AGENT_ANALYSIS.md # Complete system analysis
+└── agent_venv/                 # Virtual environment
 ```
 
 ## ⚠️ CRITICAL: Import Path Requirements

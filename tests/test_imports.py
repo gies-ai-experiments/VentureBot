@@ -11,8 +11,9 @@ def test_imports():
     print("🔍 VentureBots Import Diagnostic Tool")
     print("=" * 50)
     
-    # Add project root to Python path
-    project_root = os.path.dirname(os.path.abspath(__file__))
+    # Add project root to Python path (parent of tests directory)
+    tests_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(tests_dir)
     sys.path.insert(0, project_root)
     print(f"Project root: {project_root}")
     
@@ -120,7 +121,7 @@ def test_imports():
     print("\n🎉 All import tests passed!")
     print("\n✅ Ready to start VentureBots:")
     print("   Backend:  PORT=8000 python main.py")
-    print("   Frontend: agent_venv/bin/python -m streamlit run streamlit_chat.py --server.port 8501")
+    print("   Frontend: chainlit run chainlit_app.py --port 8501")
     return True
 
 if __name__ == "__main__":

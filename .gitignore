@@ -29,6 +29,9 @@ __pycache__/
 *.sqlite3-journal
 sessions.db
 
+# Data directory
+data/
+
 # System files
 .DS_Store
 Thumbs.db
