@@ -2,15 +2,16 @@ import chainlit as cl
 import os
 import requests
 import json
+import asyncio
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, AsyncGenerator
 
 # Configuration
 ADK_SERVER_URL = os.getenv("ADK_BACKEND_URL", "http://localhost:8000")
 APP_NAME = "manager"
 
-class VentureBotSession:
-    """Manages VentureBot session state and API communication"""
+class StreamingVentureBotSession:
+    """Enhanced VentureBot session with true Chainlit streaming support"""
     
     def __init__(self):
         self.user_id = None
@@ -41,10 +42,11 @@ class VentureBotSession:
         except requests.exceptions.RequestException as e:
             return False, f"Connection error: {str(e)}"
     
-    def send_message_stream(self, message: str) -> tuple[bool, str]:
-        """Send message to ADK agent and get streaming response"""
+    async def send_message_stream(self, message: str) -> AsyncGenerator[str, None]:
+        """Send message to ADK agent and yield streaming tokens"""
         if not self.session_created:
-            return False, "Session not created"
+            yield "❌ Session not properly initialized"
+            return
             
         url = f"{ADK_SERVER_URL}/run_sse"
         payload = {
@@ -62,16 +64,18 @@ class VentureBotSession:
         try:
             response = requests.post(url, json=payload, stream=True, timeout=30)
             if response.status_code == 200:
-                return True, self._parse_streaming_response(response)
+                async for token in self._parse_streaming_tokens(response):
+                    yield token
             else:
-                return False, f"API Error: {response.text}"
+                yield f"❌ API Error: {response.text}"
         except requests.exceptions.RequestException as e:
-            return False, f"Connection error: {str(e)}"
+            yield f"❌ Connection error: {str(e)}"
     
-    def _parse_streaming_response(self, response) -> str:
-        """Parse SSE streaming response from ADK"""
-        streaming_text = ""
+    async def _parse_streaming_tokens(self, response) -> AsyncGenerator[str, None]:
+        """Parse SSE streaming response and yield individual tokens"""
+        full_response = ""
         
+        # First, collect the complete response to avoid partial parsing issues
         for line in response.iter_lines(decode_unicode=True):
             if line.startswith('data: '):
                 try:
@@ -79,18 +83,21 @@ class VentureBotSession:
                     if event_data.get("content") and event_data["content"].get("parts"):
                         for part in event_data["content"]["parts"]:
                             if part.get("text") and event_data["content"].get("role") == "model":
-                                new_text = part["text"]
-                                if event_data.get("partial", False):
-                                    streaming_text += new_text
-                                else:
-                                    streaming_text = new_text
+                                full_response = part["text"]
+                                        
                 except json.JSONDecodeError:
                     continue
         
-        return streaming_text.strip() if streaming_text.strip() else "I processed your request but have no text response."
+        # Now stream the complete response character by character
+        if full_response.strip():
+            for char in full_response:
+                yield char
+                await asyncio.sleep(0.01)  # Smooth streaming
+        else:
+            yield "I processed your request but have no text response."
 
 # Global session instance
-venture_session = VentureBotSession()
+venture_session = StreamingVentureBotSession()
 
 @cl.on_chat_start
 async def start():
@@ -99,7 +106,12 @@ async def start():
     
     # IMMEDIATELY send welcome message - no waiting
     welcome_msg = cl.Message(
-        content="""👋 **Welcome to VentureBots!**
+        content="",
+        author="VentureBot"
+    )
+    
+    # Stream welcome message for demo effect
+    welcome_text = """👋 **Welcome to VentureBots!**
 
 I'm your AI entrepreneurship coach, ready to help you:
 - 💡 **Generate innovative business ideas**
@@ -107,9 +119,13 @@ I'm your AI entrepreneurship coach, ready to help you:
 - 📋 **Develop product strategies**
 - 🎯 **Craft effective prompts**
 
-🚀 **Initializing your coaching session...**""",
-        author="VentureBot"
-    )
+🚀 **Initializing your coaching session...**"""
+    
+    # Stream the welcome message character by character (optimized for production)
+    for char in welcome_text:
+        await welcome_msg.stream_token(char)
+        await asyncio.sleep(0.01)  # Faster for production
+    
     await welcome_msg.send()
     
     # Generate unique IDs
@@ -124,32 +140,27 @@ I'm your AI entrepreneurship coach, ready to help you:
     
     if success:
         # Update welcome message to show ready status
-        welcome_msg.content = """👋 **Welcome to VentureBots!**
-
-I'm your AI entrepreneurship coach, ready to help you:
-- 💡 **Generate innovative business ideas**
-- ✅ **Validate your concepts** 
-- 📋 **Develop product strategies**
-- 🎯 **Craft effective prompts**
-
-✅ **Ready to start!** Tell me about your interests or share an idea you'd like to explore."""
-        await welcome_msg.update()
+        status_msg = cl.Message(content="", author="VentureBot")
+        status_text = "✅ **Ready to start!** Tell me about your interests or share an idea you'd like to explore."
+        
+        for char in status_text:
+            await status_msg.stream_token(char)
+            await asyncio.sleep(0.01)
+        
+        await status_msg.send()
         
         # Send initial greeting to trigger onboarding (in background)
-        success, response = venture_session.send_message_stream("hi")
+        onboarding_msg = cl.Message(content="", author="VentureBot")
         
-        if success and response:
-            # Send the onboarding response
-            onboarding_msg = cl.Message(
-                content=response,
-                author="VentureBot"
-            )
-            await onboarding_msg.send()
+        async for token in venture_session.send_message_stream("hi"):
+            await onboarding_msg.stream_token(token)
+            
+        await onboarding_msg.send()
+        
     else:
-        # Update welcome message with error
-        welcome_msg.content = f"""👋 **Welcome to VentureBots!**
-
-❌ **Connection Issue**
+        # Show error message
+        error_msg = cl.Message(content="", author="VentureBot")
+        error_text = f"""❌ **Connection Issue**
 {message}
 
 💡 **Troubleshooting:**
@@ -158,39 +169,38 @@ I'm your AI entrepreneurship coach, ready to help you:
 • Try refreshing the page
 
 You can still chat, but responses may be delayed."""
-        await welcome_msg.update()
+        
+        for char in error_text:
+            await error_msg.stream_token(char)
+            await asyncio.sleep(0.01)
+            
+        await error_msg.send()
 
 @cl.on_message
 async def handle_message(message: cl.Message):
-    """Handle incoming user messages"""
+    """Handle incoming user messages with streaming"""
     venture_session = cl.user_session.get("venture_session")
     
     if not venture_session or not venture_session.session_created:
-        error_msg = cl.Message(
-            content="❌ Session not properly initialized. Please refresh the page.",
-            author="System"
-        )
+        error_msg = cl.Message(content="", author="System")
+        error_text = "❌ Session not properly initialized. Please refresh the page."
+        
+        for char in error_text:
+            await error_msg.stream_token(char)
+            await asyncio.sleep(0.01)
+        
         await error_msg.send()
         return
     
-    # IMMEDIATELY show thinking message
-    thinking_msg = cl.Message(
-        content="🤔 Analyzing your message...",
-        author="VentureBot"
-    )
-    await thinking_msg.send()
+    # Create response message for streaming
+    response_msg = cl.Message(content="", author="VentureBot")
     
-    # Send message to backend
-    success, response = venture_session.send_message_stream(message.content)
+    # Stream the response token by token
+    async for token in venture_session.send_message_stream(message.content):
+        await response_msg.stream_token(token)
     
-    if success:
-        # Update thinking message with actual response
-        thinking_msg.content = response
-        await thinking_msg.update()
-    else:
-        # Update with error message
-        thinking_msg.content = f"❌ **Connection Error**\n\n{response}\n\n🔄 Try sending your message again or refresh the page."
-        await thinking_msg.update()
+    # Send the completed message
+    await response_msg.send()
 
 @cl.on_chat_end
 async def end():
@@ -206,7 +216,7 @@ async def chat_profile():
     return [
         cl.ChatProfile(
             name="entrepreneurship",
-            markdown_description="**🚀 VentureBots Entrepreneurship Coach**\n\nYour AI-powered guide for startup success. Give us a moment while we wake up the Manager :)",
+            markdown_description="**🚀 VentureBots Entrepreneurship Coach**\n\nYour AI-powered guide for startup success with real-time streaming responses.",
             icon="🚀",
         )
     ]
@@ -218,6 +228,6 @@ async def setup_agent(settings):
     pass
 
 if __name__ == "__main__":
-    # This allows running with `python chainlit_app.py`
+    # This allows running with `python enhanced_chainlit_app.py`
     import chainlit.cli
     chainlit.cli.run_chainlit(__file__)

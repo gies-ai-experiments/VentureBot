@@ -6,12 +6,16 @@ Test the live enhanced market intelligence system by sending requests to the run
 import requests
 import json
 import time
+import os
 from datetime import datetime
+
+# Configuration - can be overridden via environment variables
+ADK_SERVER_URL = os.getenv("ADK_SERVER_URL", "http://localhost:8000")
 
 def test_backend_health():
     """Test if backend is running and healthy"""
     try:
-        response = requests.get("http://localhost:8000/docs", timeout=5)
+        response = requests.get(f"{ADK_SERVER_URL}/docs", timeout=5)
         if response.status_code == 200:
             print("✅ Backend is running and accessible")
             return True
@@ -25,7 +29,7 @@ def test_backend_health():
 def create_session():
     """Create a new session for testing"""
     try:
-        url = "http://localhost:8000/apps/manager/users/test_user/sessions/test_session"
+        url = f"{ADK_SERVER_URL}/apps/manager/users/test_user/sessions/test_session"
         response = requests.post(url, timeout=10)
         if response.status_code == 200:
             print("✅ Session created successfully")
@@ -40,7 +44,7 @@ def create_session():
 def send_message_to_agent(message):
     """Send a message to the agent and get response"""
     try:
-        url = "http://localhost:8000/run"
+        url = f"{ADK_SERVER_URL}/run"
         payload = {
             "app_name": "manager",
             "user_id": "test_user", 

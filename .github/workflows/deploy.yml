@@ -135,7 +135,7 @@ jobs:
             # Build and start single container with both services
             echo "Building and starting single container..."
             docker build -t $IMAGE_NAME -f docker/Dockerfile .
-            docker run -d -p 80:80 --env-file .env -e ADK_BACKEND_URL=http://localhost:8000 --name $CONTAINER_NAME $IMAGE_NAME
+            docker run -d -p 80:80 --env-file .env --name $CONTAINER_NAME $IMAGE_NAME
             
             echo "--- Single container application started ---"
             echo "Frontend (Chainlit): http://$(curl -s ifconfig.me)"
