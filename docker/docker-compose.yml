@@ -33,6 +33,10 @@ services:
       - backend
     environment:
       - ADK_BACKEND_URL=${ADK_BACKEND_URL:-http://backend:8000}
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_JWKS_URL=${SUPABASE_JWKS_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]

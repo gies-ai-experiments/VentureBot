@@ -3,6 +3,10 @@ import os
 import uvicorn
 from fastapi import FastAPI
 from google.adk.cli.fast_api import get_fast_api_app
+from jose import jwt, JWTError
+import requests
+from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
 
 # The AGENT_DIR will be the root of your project, where main.py is located.
 # get_fast_api_app will scan this directory for agent modules (manager/, etc.)
@@ -24,6 +28,35 @@ app: FastAPI = get_fast_api_app(
     allow_origins=ALLOWED_ORIGINS,
     web=SERVE_WEB_INTERFACE,
 )
+
+JWKS_URL = os.getenv("SUPABASE_JWKS_URL")
+jwks = requests.get(JWKS_URL, timeout=10).json()
+
+def verify_supabase_token(token: str):
+    head = jwt.get_unverified_header(token)
+    key = next((k for k in jwks["keys"] if k["kid"] == head["kid"]), None)
+    if not key:
+        raise HTTPException(status_code=401, detail="Key not found in JWKS")
+    return jwt.decode(token, key, algorithms=["RS256"])
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    if request.url.path.startswith("/docs"):      # allow swagger if you want
+        return await call_next(request)
+
+    auth = request.headers.get("authorization")
+    if not auth or not auth.lower().startswith("bearer "):
+        return JSONResponse(status_code=401, content={"detail": "Missing Bearer token"})
+    token = auth.split()[1]
+    try:
+        user = verify_supabase_token(token)
+        request.state.user = user
+        # uncomment when you want to scope agent memory to a user.    
+        #from adk.VentureBot.manager.agent import current_uid
+        #current_uid.set(user["sub"])  # set per-request UID for your agents   # make UID available downstream
+    except HTTPException as e:
+        return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+    return await call_next(request)
 
 # You can add custom FastAPI routes here if needed in the future
 # @app.get("/custom-hello")

@@ -11,6 +11,20 @@ from .sub_agents.idea_generator.agent import idea_generator
 from .sub_agents.validator_agent.agent import validator_agent
 from .sub_agents.onboarding_agent.agent import onboarding_agent
 
+
+# to scope agent memory to a user. 
+#from contextvars import ContextVar
+#current_uid: ContextVar[str] = ContextVar("current_uid", default="anonymous")
+# inside each handler where you touch self.memory, do:
+
+# python
+# Copy
+# Edit
+# uid = current_uid.get()
+# self.memory.setdefault(uid, {})
+# self.memory[uid]["IdeaCoach"] = ideas
+
+
 # First check environment variables (prioritize --env-file in Docker)
 api_key = os.getenv("ANTHROPIC_API_KEY")
 
