@@ -9,8 +9,11 @@ from google.adk.cli.fast_api import get_fast_api_app
 AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Configuration for the ADK FastAPI app
-# You might adjust SESSION_DB_URL if you want a persistent DB outside the container later
-SESSION_DB_URL = "sqlite:///./sessions.db"  # Default SQLite DB in the current directory
+
+# Replace hard-wired SQLite URL with env-driven value
+SESSION_DB_URL = os.getenv("DATABASE_URL")  # falls back to .env
+
+# (OPTIONAL) engine args for Postgres pooling, keep as-is if ADK manages engine
 ALLOWED_ORIGINS = ["*"]  # Allow all origins for simplicity, adjust if needed for security
 SERVE_WEB_INTERFACE = True # This ensures the ADK Web UI is served
 

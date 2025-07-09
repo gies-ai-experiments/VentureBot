@@ -16,3 +16,8 @@ starlette==0.46.2
 aiofiles==23.2.1  # For async file operations
 python-json-logger==2.0.7  # For structured logging
 deprecated==1.2.14  # Required dependency
+
+psycopg2-binary==2.9.9     # Postgres driver
+supabase==2.3.3            # Optional, Chainlit sign-in helper
+python-jose==3.3.0         # JWT verification
+
