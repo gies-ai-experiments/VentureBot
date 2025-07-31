@@ -50,7 +50,9 @@ idea_generator = Agent(
        - Present ideas in a clear, readable format for the user
        - Number each idea (1-5) clearly
        - Use bullet points or numbered lists for easy reading
-       - After showing the readable format, also store the ideas in memory['IdeaCoach'] as JSON:
+       - CRITICAL: Store ideas in memory['IdeaCoach'] as JSON but NEVER OUTPUT THE JSON IN YOUR RESPONSE MESSAGE
+       - JSON is for internal memory storage only - users should NEVER see raw JSON
+       - Memory storage format (DO NOT DISPLAY THIS):
        [
          {{ "id": 1, "idea": "..." }},
          ...

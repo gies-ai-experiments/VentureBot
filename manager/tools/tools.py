@@ -312,5 +312,14 @@ def format_user_profile(user_input: Dict) -> str:
     Hobbies: {user_input.get('hobbies')}
     Favorite Activities: {user_input.get('favorite_activities')}
     """
+
+# Export tools_dict for ADK compatibility
+tools_dict = {
+    "web_search": web_search_tool,
+    "claude_web_search": claude_web_search
+}
+
+# Also export web_search as an alias for claude_web_search for backward compatibility
+web_search = claude_web_search
        
        
