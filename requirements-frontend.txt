@@ -1,0 +1,3 @@
+chainlit==1.0.200
+requests==2.31.0
+asyncio-compat==0.1.0

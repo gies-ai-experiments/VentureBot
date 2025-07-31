@@ -20,5 +20,5 @@ EXPOSE 8000
 # Set working directory for ADK
 WORKDIR /app/manager
 
-# Start ADK API server
-CMD ["adk", "api_server", "--port", "8000"] 
+# Start ADK API server (Railway provides PORT env var)
+CMD ["sh", "-c", "adk api_server --port ${PORT:-8000} --host 0.0.0.0"] 
