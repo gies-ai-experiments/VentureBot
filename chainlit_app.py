@@ -75,16 +75,16 @@ class StreamingVentureBotSession:
         """Parse SSE streaming response and yield individual tokens"""
         full_response = ""
         
-        # First, collect the complete response to avoid partial parsing issues
         for line in response.iter_lines(decode_unicode=True):
             if line.startswith('data: '):
                 try:
                     event_data = json.loads(line[6:])  # Remove 'data: ' prefix
-                    if event_data.get("content") and event_data["content"].get("parts"):
+                    if event_data.get("content") and event_data["content"].get("parts") and event_data["content"].get("role") == "model":
+                        current_content = ""
                         for part in event_data["content"]["parts"]:
-                            if part.get("text") and event_data["content"].get("role") == "model":
-                                full_response += part["text"]
-                                        
+                            if part.get("text"):
+                                current_content += part["text"]
+                        full_response = current_content  # Overwrite with latest
                 except json.JSONDecodeError:
                     continue
         
