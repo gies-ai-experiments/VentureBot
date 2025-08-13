@@ -4,11 +4,14 @@
     "builder": "dockerfile",
     "dockerfilePath": "docker/Dockerfile"
   },
-  "deploy": {
-    "startCommand": "python main.py",
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 100,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+  "variables": {
+    "PORT": "80",
+    "BACKEND_PORT": "8000",
+    "FRONTEND_PORT": "8501",
+    "ANTHROPIC_API_KEY": "",
+    "SERPAPI_API_KEY": "",
+    "OPENAI_API_KEY": "",
+    "LOG_LEVEL": "INFO",
+    "DEBUG_MODE": "false"
   }
 }
