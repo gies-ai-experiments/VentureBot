@@ -2,11 +2,16 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "dockerfile",
-    "dockerfilePath": "docker/Dockerfile.backend"
+    "dockerfilePath": "docker/Dockerfile"
   },
-  "deploy": {
-    "startCommand": "cd /app && adk api_server --port $PORT --host 0.0.0.0",
-    "healthcheckPath": "/docs",
-    "healthcheckTimeout": 30
+  "variables": {
+    "PORT": "80",
+    "BACKEND_PORT": "8000",
+    "FRONTEND_PORT": "8501",
+    "ANTHROPIC_API_KEY": "",
+    "SERPAPI_API_KEY": "",
+    "OPENAI_API_KEY": "",
+    "LOG_LEVEL": "INFO",
+    "DEBUG_MODE": "false"
   }
 }
