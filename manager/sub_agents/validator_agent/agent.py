@@ -53,7 +53,7 @@ class ClaudeWebSearchValidator(Agent):
                 start_time = time.time()
                 
                 # Add timeout protection (max 35 seconds for web search)
-                search_task = asyncio.create_task(asyncio.to_thread(claude_web_search, selected_idea["idea"], anthropic_client))
+                search_results = claude_web_search(selected_idea["idea"], anthropic_client)
                 try:
                     search_results = await asyncio.wait_for(search_task, timeout=35.0)
                     num_results = len(search_results.get("results", []))
