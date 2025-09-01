@@ -45,6 +45,9 @@ node_modules/
 *.swp
 *.swo
 
+# Vercel
+.vercel/
+
 # C extensions
 *.so
 

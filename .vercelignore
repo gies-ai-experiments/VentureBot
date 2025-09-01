@@ -4,6 +4,7 @@ agent_venv/
 data/
 tests/
 scripts/
+src/
 *.log
 sessions.db
 .env

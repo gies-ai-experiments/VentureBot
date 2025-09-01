@@ -14,5 +14,10 @@
   ],
   "env": {
     "ADK_BACKEND_URL": "@adk_backend_url"
+  },
+  "functions": {
+    "chainlit_app.py": {
+      "runtime": "python3.9"
+    }
   }
 }
