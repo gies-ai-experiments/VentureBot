@@ -1,7 +1,10 @@
 # VentureBot UX Issues Analysis
 
 **Date**: July 8, 2025  
-**Context**: Comprehensive UX analysis and critical issue identification
+**Context**: Comprehensive UX analysis and critical issue identification (legacy ADK implementation)
+
+> **Note:** The specific file references below refer to the pre-CrewAI architecture.
+> They are retained for historical awareness after the migration to CrewAI.
 
 ## Issues Identified and Fixed
 

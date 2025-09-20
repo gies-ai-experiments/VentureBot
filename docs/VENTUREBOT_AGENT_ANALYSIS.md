@@ -1,5 +1,9 @@
 # VentureBot Agent System Analysis & Troubleshooting Template
 
+> **Legacy Notice:** This template describes the pre-migration Google ADK setup.
+> VentureBot now utilises CrewAI for orchestration. Use this document for historical
+> context only and rely on the refreshed README and development guide for current details.
+
 ## 1. System Architecture Overview
 
 ### Component Hierarchy

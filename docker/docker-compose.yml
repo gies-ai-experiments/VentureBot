@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Backend - ADK API Server
+  # Backend - FastAPI CrewAI Server
   backend:
     build:
       context: ..
@@ -14,7 +14,7 @@ services:
       - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -32,7 +32,7 @@ services:
     depends_on:
       - backend
     environment:
-      - ADK_BACKEND_URL=${ADK_BACKEND_URL:-http://backend:8000}
+      - VENTUREBOT_API_URL=${VENTUREBOT_API_URL:-http://backend:8000}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]

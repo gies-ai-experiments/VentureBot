@@ -1,32 +1,45 @@
 #!/bin/bash
 
-# Configuration - can be overridden via environment variables
-ADK_SERVER_URL=${ADK_SERVER_URL:-http://localhost:8000}
+API_URL=${VENTUREBOT_API_URL:-http://localhost:8000}
 
 echo "🔍 VentureBots Health Check"
 echo "=========================="
-echo "🌐 Testing server: $ADK_SERVER_URL"
+echo "🌐 Testing server: $API_URL"
 
-# Check if ADK server is responding
-echo "📡 Testing ADK server..."
-if curl -f "$ADK_SERVER_URL/docs" > /dev/null 2>&1; then
-    echo "✅ ADK server is responding"
+# Check FastAPI health endpoint
+echo "📡 Checking FastAPI /health..."
+if curl -f "$API_URL/health" > /dev/null 2>&1; then
+    echo "✅ FastAPI server is responding"
 else
-    echo "❌ ADK server is not responding"
+    echo "❌ FastAPI server is not responding"
     exit 1
 fi
 
-# Test manager app endpoint
-echo "🤖 Testing manager app..."
-response=$(curl -s -w "%{http_code}" -X POST \
-    "$ADK_SERVER_URL/apps/manager/users/healthcheck/sessions/healthcheck" \
+# Create a throwaway session
+SESSION_RESPONSE=$(curl -s -X POST "$API_URL/api/sessions" \
     -H "Content-Type: application/json" \
-    -d '{"state": {"test": true}}' -o /dev/null)
+    -d '{"user_id": "healthcheck"}')
 
-if [ "$response" -eq 200 ] || [ "$response" -eq 201 ]; then
-    echo "✅ Manager app is working"
+SESSION_ID=$(echo "$SESSION_RESPONSE" | python -c 'import sys,json; data=json.load(sys.stdin); print(data.get("session_id", ""))')
+
+if [ -z "$SESSION_ID" ]; then
+    echo "❌ Failed to create session"
+    echo "Response: $SESSION_RESPONSE"
+    exit 1
+fi
+
+echo "✅ Session created (ID: $SESSION_ID)"
+
+# Send a simple message
+CHAT_RESPONSE=$(curl -s -X POST "$API_URL/api/chat" \
+    -H "Content-Type: application/json" \
+    -d "{\"session_id\": \"$SESSION_ID\", \"message\": \"ping\"}")
+
+if echo "$CHAT_RESPONSE" | grep -q 'message'; then
+    echo "✅ Chat endpoint responded successfully"
 else
-    echo "❌ Manager app failed (HTTP $response)"
+    echo "❌ Chat endpoint failed"
+    echo "Response: $CHAT_RESPONSE"
     exit 1
 fi
 

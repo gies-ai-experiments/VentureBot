@@ -1,5 +1,9 @@
 # VentureBots - Claude Code Memory & Development Guide
 
+> **Legacy Notice:** This document reflects the original Google ADK implementation.
+> VentureBot now relies on CrewAI. Refer to `README.md` and `docs/DEVELOPMENT_GUIDE.md`
+> for up-to-date guidance on the CrewAI workflow.
+
 ## Project Overview
 
 VentureBots is an AI-powered entrepreneurship coaching platform built with Google Agent Development Kit (ADK) and Chainlit. It provides multi-agent AI coaching for startup idea generation, validation, product development, and prompt engineering.

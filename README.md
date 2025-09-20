@@ -4,9 +4,9 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
 ![Status](https://img.shields.io/badge/status-active-green.svg)
 
-**An advanced multi-agent AI coaching platform for entrepreneurship education, powered by Google ADK and enhanced with real-time market intelligence.**
+**An advanced multi-agent AI coaching platform for entrepreneurship education, powered by CrewAI and enhanced with structured venture-building workflows.**
 
-VentureBots revolutionizes entrepreneurship education by orchestrating specialized AI agents that guide users through the complete startup journey—from idea generation to market validation to product development. Built with Google's Agent Development Kit (ADK) and featuring a modern Chainlit interface, it provides comprehensive coaching with real-time market analysis and competitive intelligence.
+VentureBots revolutionizes entrepreneurship education by coordinating specialized CrewAI agents that guide users through the complete startup journey—from pain discovery to market validation, product definition, and no-code execution. With a streamlined FastAPI backend and modern Chainlit interface, it delivers classroom-ready coaching with a warm and supportive tone.
 
 ## ✨ Key Features
 
@@ -31,8 +31,8 @@ VentureBots revolutionizes entrepreneurship education by orchestrating specializ
 - **Connection monitoring** with intelligent error handling and retry mechanisms
 
 ### 🏗️ **Enterprise-Ready Architecture**
-- **Google ADK integration** for scalable multi-agent orchestration
-- **FastAPI backend** with RESTful API and SSE streaming support
+- **CrewAI orchestration** for explainable, modular agent collaboration
+- **FastAPI backend** with clean REST endpoints for session management
 - **Docker containerization** for consistent deployment across environments
 - **Comprehensive testing suite** with automated validation workflows
 
@@ -50,7 +50,7 @@ VentureBots implements a sophisticated multi-agent architecture designed for edu
                       │ HTTP/SSE
 ┌─────────────────────▼───────────────────────────────────────┐
 │                  FastAPI Backend                           │
-│            (Google ADK Integration)                         │
+│            (CrewAI Orchestrator)                           │
 └─────────────────────┬───────────────────────────────────────┘
                       │
         ┌─────────────▼─────────────┐
@@ -66,14 +66,14 @@ VentureBots implements a sophisticated multi-agent architecture designed for edu
 └───────┘  └───────────┘  └───────────┘  └───────────┘
                                │
                     ┌─────────▼─────────┐
-                    │  Market Analysis  │
-                    │     Tools         │
+                    │ Prompt Engineer  │
+                    │  (No-code Flow)  │
                     └───────────────────┘
 ```
 
 ### **Agent Responsibilities**
 
-- **Manager Agent**: Orchestrates workflow and coordinates between specialized agents
+- **Crew Coordinator**: Handles memory and routes between specialized CrewAI agents
 - **Onboarding Agent**: Handles user personalization and preference collection
 - **Idea Generator**: Provides creative brainstorming with market-aware suggestions
 - **Validator Agent**: Conducts comprehensive market validation with real-time intelligence
@@ -106,26 +106,24 @@ VentureBots implements a sophisticated multi-agent architecture designed for edu
 2. **Configure environment**:
    Create a `.env` file in the project root:
    ```env
-   # Required API Keys
+   # Primary LLM provider (CrewAI supports Gemini, OpenAI, Anthropic, etc.)
+   GEMINI_API_KEY="your_gemini_api_key_here"
+   # Optional fallbacks
+   OPENAI_API_KEY="your_openai_api_key_here"
    ANTHROPIC_API_KEY="your_anthropic_api_key_here"
-   OPENAI_API_KEY="your_openai_api_key_here"        # Optional
-   SERPAPI_API_KEY="your_serpapi_api_key_here"      # Required for market research
-   
-   # Optional Configuration
-   ADK_BACKEND_URL="http://localhost:8000"          # Backend URL for frontend
    ```
 
 3. **API Key Setup**:
-   - **[Anthropic API](https://console.anthropic.com/)**: Primary LLM provider for Claude models
-   - **[SerpAPI](https://serpapi.com/)**: Powers market research and competitive analysis
-   - **[OpenAI API](https://platform.openai.com/)**: Alternative LLM provider (optional)
+   - **[Google Gemini API](https://ai.google.dev/)**: Recommended provider for VentureBot (flash or pro models)
+   - **[OpenAI API](https://platform.openai.com/)**: Optional fallback provider
+   - **[Anthropic API](https://console.anthropic.com/)**: Optional fallback provider
 
 ### **Running VentureBots**
 
 #### Option 1: Development Setup (Recommended)
 ```bash
-# Pre-flight check (always run first)
-python tests/test_imports.py
+# Pre-flight check (mocks LLM calls)
+pytest tests/test_imports.py
 
 # Terminal 1: Start Backend (Port 8000)
 PORT=8000 python main.py
@@ -302,7 +300,7 @@ curl -s http://localhost:8501 | head -10
 **Cause**: Import errors or backend connection issues
 ```bash
 # Solution:
-python tests/test_imports.py          # Check for import errors
+pytest tests/test_imports.py          # Check for import errors
 PORT=8000 python main.py        # Restart backend
 ```
 
@@ -317,9 +315,9 @@ PORT=8000 python main.py        # Restart with explicit port
 #### **Import/Module Errors**
 **Cause**: Incorrect import paths in sub-agents
 ```bash
-# Solution: Ensure all sub-agents use absolute imports
-# ✅ Correct: from manager.tools.tools import claude_web_search
-# ❌ Wrong: from tools.tools import claude_web_search
+# Solution: Ensure Crew modules use absolute imports
+# ✅ Correct: from manager.crew.workflow import VentureBotCrew
+# ❌ Wrong: from crew.workflow import VentureBotCrew
 ```
 
 #### **API Key Issues**
@@ -361,22 +359,15 @@ VentureBots/
 ├── manager/                        # 🧠 AI Agent System
 │   ├── agent.py                    # 🎯 Root orchestration agent
 │   ├── config.yaml                 # ⚙️ Agent configuration
-│   ├── sub_agents/                 # 🤖 Specialized coaching agents
-│   │   ├── onboarding_agent/       # 👋 User onboarding & personalization
-│   │   ├── idea_generator/         # 💡 Creative brainstorming agent
-│   │   ├── validator_agent/        # ✅ Enhanced market validation
-│   │   ├── product_manager/        # 📋 PRD creation & product guidance
-│   │   └── prompt_engineer/        # 🛠️ AI prompt optimization
-│   └── tools/                      # 🔧 Enhanced utilities & tools
-│       ├── tools.py                # 🌐 Advanced web search & APIs
-│       ├── market_analyzer.py      # 📊 Market intelligence engine
-│       └── dashboard_generator.py  # 📈 Visual dashboard system
+│   ├── crew/                       # 🤖 CrewAI orchestration layer
+│   │   ├── agents.py               # Agent factory & LLM wiring
+│   │   ├── schemas.py              # Structured task outputs
+│   │   ├── state.py                # Session state management
+│   │   └── workflow.py             # Core VentureBot pipeline
+│   └── service.py                  # High-level service facade
 │
 ├── tests/                          # 🧪 Test suite
-│   ├── test_imports.py             # 🔍 Import validation
-│   ├── test_enhanced_analysis.py   # 📊 Market intelligence tests
-│   ├── test_live_system.py         # 🔄 Live system integration
-│   └── test_validator_agent.py     # ✅ Validation system tests
+│   └── test_imports.py             # 🔍 CrewAI diagnostic (mocked flow)
 │
 ├── docs/                           # 📚 Documentation
 │   ├── CLAUDE.md                   # 🤖 Development memory & guide
@@ -471,26 +462,23 @@ cache_enabled: true           # Response caching
 ### **Environment Variables** (`.env`)
 
 ```env
-# Required API Keys
-ANTHROPIC_API_KEY="sk-ant-api03-..."      # Primary LLM provider
-SERPAPI_API_KEY="your-serpapi-key..."     # Market research & web search
+# CrewAI model providers
+GEMINI_API_KEY="your-gemini-key"          # Recommended provider
+OPENAI_API_KEY="sk-..."                  # Optional fallback
+ANTHROPIC_API_KEY="sk-ant-..."           # Optional fallback
 
-# Optional API Keys
-OPENAI_API_KEY="sk-..."                   # Alternative LLM provider
-GOOGLE_API_KEY="your-google-key..."       # Google Search API (alternative)
+# Service configuration
+VENTUREBOT_API_URL="http://localhost:8000"  # Used by Chainlit frontend
+LOG_LEVEL="INFO"
+DEBUG_MODE="false"
 
-# System Configuration
-ADK_BACKEND_URL="http://localhost:8000"   # Backend URL for frontend
-LOG_LEVEL="INFO"                          # Logging level
-DEBUG_MODE="false"                        # Debug mode toggle
+# Session persistence
+DATABASE_URL="sqlite:///./sessions.db"
+SESSION_TIMEOUT_MINUTES=60
 
-# Database Configuration
-DATABASE_URL="sqlite:///./sessions.db"    # Session storage
-SESSION_TIMEOUT_MINUTES=60                # Session expiration
-
-# Performance Tuning
-MAX_CONCURRENT_REQUESTS=10                # Request concurrency limit
-RATE_LIMIT_REQUESTS_PER_MINUTE=60        # Rate limiting
+# Performance tuning
+MAX_CONCURRENT_REQUESTS=10
+RATE_LIMIT_REQUESTS_PER_MINUTE=60
 ```
 
 ## 🧪 Testing & Development
@@ -498,15 +486,11 @@ RATE_LIMIT_REQUESTS_PER_MINUTE=60        # Rate limiting
 ### **Test Suite Execution**
 
 ```bash
-# Comprehensive test suite
-python tests/test_imports.py              # Import validation
-python tests/test_enhanced_analysis.py    # Market analysis testing
-python tests/test_validator_agent.py      # Validator agent testing
-python tests/test_live_system.py         # End-to-end system testing
+# Comprehensive test suite (uses mocked LLM responses)
+pytest
 
-# Individual agent testing
-python manager/sub_agents/validator_agent/test_validator.py
-python manager/sub_agents/idea_generator/test_generator.py
+# Run the diagnostic script alone
+pytest tests/test_imports.py
 ```
 
 ### **Development Workflow**
@@ -534,43 +518,22 @@ python manager/sub_agents/idea_generator/test_generator.py
 
 4. **Make Changes & Test**
    ```bash
-   # Test changes
-   python tests/test_validator_agent.py
+   # Run mocked regression suite
+   pytest
    
-   # Full system test
-   python tests/test_live_system.py
+   # Or execute the diagnostic only
+   pytest tests/test_imports.py
    ```
 
-### **Adding New Agents**
+### **Extending the CrewAI Workflow**
 
-1. **Create Agent Directory**
-   ```bash
-   mkdir manager/sub_agents/your_agent
-   touch manager/sub_agents/your_agent/agent.py
-   touch manager/sub_agents/your_agent/__init__.py
-   ```
+1. **Define the agent** in `manager/crew/agents.py` by creating a `build_<name>_agent` helper that sets role, goal, and backstory. Re-use the shared LLM from `build_llm`.
 
-2. **Implement Agent Class**
-   ```python
-   from google.adk.agents import Agent
-   
-   class YourAgent(Agent):
-       async def handle(self, conversation, memory):
-           # Your agent implementation
-           pass
-   ```
+2. **Create a schema** in `manager/crew/schemas.py` describing the structured output your new task should return.
 
-3. **Register Agent in Manager**
-   ```python
-   # In manager/agent.py
-   from manager.sub_agents.your_agent.agent import YourAgent
-   ```
+3. **Update the workflow** in `manager/crew/workflow.py` by adding a new stage, crafting the task description, and wiring the stage transition logic. Keep prompts focused on returning the JSON schema defined in step 2.
 
-4. **Add Tests**
-   ```python
-   # Create test_your_agent.py
-   # Add unit tests for your agent
-   ```
+4. **Add test coverage** by extending `tests/test_imports.py` (using the monkeypatched `_execute_task`) or creating a dedicated pytest module that exercises the new stage with mocked outputs.
 
 ## 🤝 Contributing
 
@@ -601,7 +564,7 @@ We welcome contributions to VentureBots! Here's how to get started:
 - **Code Style**: Follow PEP 8 with 88-character line length
 - **Testing**: Add tests for new features and bug fixes
 - **Documentation**: Update relevant documentation
-- **Import Paths**: Use absolute imports (`from manager.tools.tools import`)
+- **Import Paths**: Use absolute imports (`from manager.service import VentureBotService`)
 
 ### **Pull Request Process**
 
@@ -624,8 +587,8 @@ We welcome contributions to VentureBots! Here's how to get started:
 ## 📚 Resources & References
 
 ### **Technical Documentation**
-- [Google Agent Development Kit (ADK)](https://github.com/google/agent-developer-kit)
-- [Anthropic Claude API](https://docs.anthropic.com/)
+- [CrewAI Documentation](https://docs.crewai.com/)
+- [Google Gemini API](https://ai.google.dev/)
 - [Chainlit Documentation](https://docs.chainlit.io/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 

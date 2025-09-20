@@ -2,7 +2,7 @@
 
 ## Overview
 - **Frontend (Chainlit)**: Deployed to Vercel
-- **Backend (ADK)**: Deployed to Railway
+- **Backend (FastAPI + CrewAI)**: Deployed to Railway
 
 ## Step 1: Deploy Backend to Railway
 
@@ -16,8 +16,8 @@
 
 3. **Configure Environment Variables**:
    - Go to your Railway project > Variables tab
-   - Add all your current `.env` variables (Google API keys, etc.)
-   - Railway will automatically provide `PORT` variable
+   - Add your LLM keys (`GEMINI_API_KEY`, plus any optional fallbacks)
+   - Railway will automatically provide the `PORT` variable
 
 4. **Deploy**: Railway will automatically build and deploy using `docker/Dockerfile.backend`
 
@@ -32,8 +32,8 @@
 
 3. **Configure Environment Variables**:
    - Go to Project Settings > Environment Variables
-   - Add: `ADK_BACKEND_URL` = `https://your-railway-app.railway.app`
-   - Get the Railway URL from your Railway dashboard
+   - Add: `VENTUREBOT_API_URL` = `https://your-railway-app.railway.app`
+   - Copy the Railway URL once the backend deployment succeeds
 
 4. **Deploy**: Vercel will automatically deploy the Chainlit frontend
 
@@ -53,20 +53,21 @@ Both platforms will automatically redeploy when you push to the main branch:
 
 ### Railway (Backend)
 ```
-GOOGLE_CLOUD_PROJECT=your-project
-GOOGLE_GENAI_API_KEY=your-key
-# ... other backend env vars from your current .env
+GEMINI_API_KEY=your-google-gemini-key
+OPENAI_API_KEY=optional-openai-key
+ANTHROPIC_API_KEY=optional-anthropic-key
+# any additional environment variables from your `.env`
 ```
 
-### Vercel (Frontend)  
+### Vercel (Frontend)
 ```
-ADK_BACKEND_URL=https://your-railway-app.railway.app
+VENTUREBOT_API_URL=https://your-railway-app.railway.app
 ```
 
 ## Troubleshooting
 
-- **Connection errors**: Check that `ADK_BACKEND_URL` points to your Railway app
-- **Backend not starting**: Check Railway logs for ADK server errors
+- **Connection errors**: Confirm that `VENTUREBOT_API_URL` matches the Railway domain
+- **Backend not starting**: Check Railway logs for FastAPI startup errors
 - **Frontend not loading**: Check Vercel function logs
 
 ## Costs
