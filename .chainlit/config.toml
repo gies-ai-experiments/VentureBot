@@ -31,11 +31,7 @@ latex = false
 auto_tag_thread = true
 
 # Authorize users to upload files with messages
-[features.multi_modal]
-enabled = false
-accept = ["text/plain", "application/pdf"]
-max_files = 5
-max_size_mb = 5
+multi_modal = false
 
 [UI]
 # Name of the app and chatbot.

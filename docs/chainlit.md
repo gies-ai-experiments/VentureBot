@@ -70,4 +70,4 @@ Ready to start your entrepreneurial journey? Begin by introducing yourself or sh
 
 ---
 
-*Powered by Google Agent Development Kit (ADK) and Claude AI*
+*Powered by CrewAI orchestration and Google Gemini models*

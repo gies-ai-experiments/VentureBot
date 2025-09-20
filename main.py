@@ -1,35 +1,73 @@
-# main.py
+"""FastAPI entrypoint for the CrewAI-powered VentureBot service."""
+from __future__ import annotations
+
 import os
+from typing import Any, Dict
+
 import uvicorn
-from fastapi import FastAPI
-from google.adk.cli.fast_api import get_fast_api_app
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
-# The AGENT_DIR will be the root of your project, where main.py is located.
-# get_fast_api_app will scan this directory for agent modules (manager/, etc.)
-AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
+from manager.service import VentureBotService
 
-# Configuration for the ADK FastAPI app
-# You might adjust SESSION_DB_URL if you want a persistent DB outside the container later
-SESSION_DB_URL = "sqlite:///./sessions.db"  # Default SQLite DB in the current directory
-ALLOWED_ORIGINS = ["*"]  # Allow all origins for simplicity, adjust if needed for security
-SERVE_WEB_INTERFACE = True # This ensures the ADK Web UI is served
 
-# Get the FastAPI application instance from ADK
-app: FastAPI = get_fast_api_app(
-    agent_dir=AGENT_DIR,
-    session_db_url=SESSION_DB_URL,
-    allow_origins=ALLOWED_ORIGINS,
-    web=SERVE_WEB_INTERFACE,
+class CreateSessionRequest(BaseModel):
+    user_id: str = Field(..., description="Opaque identifier for the end user.")
+
+
+class CreateSessionResponse(BaseModel):
+    session_id: str
+    initial_message: str
+    stage: str
+
+
+class ChatRequest(BaseModel):
+    session_id: str = Field(..., description="Session identifier returned during creation.")
+    message: str = Field(..., description="Latest message from the user.")
+
+
+class ChatResponse(BaseModel):
+    message: str
+    stage: str
+    memory: Dict[str, Any]
+
+
+service = VentureBotService()
+
+app = FastAPI(title="VentureBot CrewAI API", version="2.0.0")
+
+allowed_origins = os.getenv("VENTUREBOT_CORS", "*").split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in allowed_origins],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# You can add custom FastAPI routes here if needed in the future
-# @app.get("/custom-hello")
-# async def read_custom_hello():
-#     return {"message": "Hello from custom route"}
+
+@app.get("/health")
+def health_check() -> Dict[str, str]:
+    """Simple readiness probe."""
+    return {"status": "ok"}
+
+
+@app.post("/api/sessions", response_model=CreateSessionResponse)
+def create_session(request: CreateSessionRequest) -> CreateSessionResponse:
+    payload = service.create_session(request.user_id)
+    return CreateSessionResponse(**payload)
+
+
+@app.post("/api/chat", response_model=ChatResponse)
+def chat(request: ChatRequest) -> ChatResponse:
+    try:
+        payload = service.chat(request.session_id, request.message)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return ChatResponse(**payload)
+
 
 if __name__ == "__main__":
-    # This block is for running locally, e.g., python main.py
-    # The Dockerfile CMD will run uvicorn directly.
-    # The PORT environment variable is used here for consistency with container environments.
-    port = int(os.environ.get("PORT", 80)) # Default to port 80
-    uvicorn.run(app, host="0.0.0.0", port=port) 
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)

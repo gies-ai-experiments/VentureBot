@@ -16,7 +16,7 @@ This roadmap outlines the transformation of VentureBots from an idea validation 
 5. **Prompt Engineer** - AI prompt optimization for no-code builders
 
 **Technical Infrastructure:**
-- Google ADK multi-agent orchestration system
+- CrewAI multi-agent orchestration system
 - Real-time market intelligence with Claude web search
 - Chainlit professional chat interface
 - 4-metric validation scoring (feasibility, innovation, market potential, competitive landscape)
@@ -295,7 +295,7 @@ This roadmap outlines the transformation of VentureBots from an idea validation 
 ```yaml
 architecture:
   backend:
-    framework: Google ADK
+    framework: CrewAI
     language: Python 3.8+
     api: FastAPI with SSE support
     

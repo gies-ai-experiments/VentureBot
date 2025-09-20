@@ -13,7 +13,7 @@
     }
   ],
   "env": {
-    "ADK_BACKEND_URL": "@adk_backend_url"
+    "VENTUREBOT_API_URL": "@venturebot_api_url"
   },
   "functions": {
     "chainlit_app.py": {
