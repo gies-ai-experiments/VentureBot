@@ -84,6 +84,7 @@ htmlcov/
 .tox/
 .nox/
 .coverage
+*.tar
 .coverage.*
 .cache
 nosetests.xml
