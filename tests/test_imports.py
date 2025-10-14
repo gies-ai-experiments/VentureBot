@@ -99,13 +99,13 @@ def test_service_happy_path():
     print("🔍 CrewAI VentureBot Diagnostic")
     print("=" * 52)
 
-    key_present = any(os.getenv(var) for var in ("GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"))
+    key_present = any(os.getenv(var) for var in ("OPENAI_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"))
     if key_present:
         print("✅ LLM API key detected in environment")
     else:
-        print("⚠️ No LLM API key detected – real conversations will require GEMINI_API_KEY or another provider.")
+        print("⚠️ No LLM API key detected – real conversations will require OPENAI_API_KEY or another provider.")
 
-    service = VentureBotService(config=VentureConfig(model="gemini/gemini-1.5-flash"))
+    service = VentureBotService(config=VentureConfig(model="openai/gpt-4o-mini"))
     session = service.create_session(user_id="diagnostic-user")
 
     assert session["stage"] == "idea_generation"

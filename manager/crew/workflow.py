@@ -228,22 +228,52 @@ class VentureBotCrew:
         pain = state.memory.get("USER_PAIN", {})
         preferences = state.memory.get("USER_PREFERENCES", {})
         profile = state.memory.get("USER_PROFILE", {})
+        founder = profile.get("name", "friend")
+        pain_description = pain.get("description", "")
+        pain_category = pain.get("category", "unspecified")
+        interests = preferences.get("interests", "")
+        activities = preferences.get("activities", "")
         description = (
-            "You are VentureBot's idea generator."
-            "\n\nFounder name: {founder}\nPain point: {pain}\nCategory: {category}\n"
-            "Interests: {interests}\nActivities: {activities}\n\n"
-            f"Generate {self.config.num_ideas} concise ideas (<15 words each)."
-            " For each idea include a BADM 350 concept label."
+            "You are VentureBot's idea generator.\n"
+            "\nInputs you MUST rely on:\n"
+            f"- Founder name: {founder}\n"
+            f"- Pain description: {pain_description or '<<missing>>'}\n"
+            f"- Pain category: {pain_category}\n"
+            f"- Interests: {interests or '<<none provided>>'}\n"
+            f"- Activities: {activities or '<<none provided>>'}\n"
+            "\nTechnical concepts to leverage (choose at least one per idea):\n"
+            "- Value & Productivity Paradox\n"
+            "- IT as Competitive Advantage\n"
+            "- E-Business Models\n"
+            "- Network Effects & Long Tail\n"
+            "- Crowd-sourcing\n"
+            "- Data-driven value\n"
+            "- Web 2.0/3.0 & Social Media Platforms\n"
+            "- Software as a Service\n"
+            "\nRole & steps:\n"
+            f"1) Generate {self.config.num_ideas} concise app ideas (≤ 15 words) that directly address the pain.\n"
+            "2) Keep each idea practical for an initial build and avoid duplicates.\n"
+            "3) Associate each idea with a short “Concept:” line naming the BADM 350 concept(s) used.\n"
+            "4) Inspire the user while staying grounded in feasible execution.\n"
+            "\nOutput formatting for the user message:\n"
+            f"- Present a numbered list 1..{self.config.num_ideas}.\n"
+            "- Each list item: one-line idea followed by a new line `Concept: <concept>`.\n"
+            "- Do not expose raw JSON in the user-facing message.\n"
+            "- End with the bold call-to-action **Reply with the number of the idea you want to validate next.**\n"
+            "\nStructured response requirements:\n"
+            "- Return JSON compliant with IdeaGenerationResponse.\n"
+            "- Populate ideas with ids 1..{self.config.num_ideas}, each containing `idea` (≤ 15 words) and `concept`.\n"
+            "- Ensure the `message` field matches the formatting instructions above."
         )
         expected_output = (
-            "Return JSON matching IdeaGenerationResponse with a markdown-ready message and a list of idea objects."
+            "Return JSON matching IdeaGenerationResponse with the formatted user-facing message and idea list including id, idea text, and concept."
         )
         inputs = {
-            "founder": profile.get("name", "friend"),
-            "pain": pain.get("description", ""),
-            "category": pain.get("category", "unspecified"),
-            "interests": preferences.get("interests", ""),
-            "activities": preferences.get("activities", ""),
+            "founder": founder,
+            "pain": pain_description,
+            "category": pain_category,
+            "interests": interests,
+            "activities": activities,
         }
         response = self._execute_task(
             agent_key="idea",

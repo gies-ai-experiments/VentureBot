@@ -12,7 +12,7 @@ import yaml
 class VentureConfig:
     """Runtime configuration values sourced from YAML + environment defaults."""
 
-    model: str = "gemini/gemini-1.5-flash"
+    model: str = "openai/gpt-4o-mini"
     num_ideas: int = 5
     validation_threshold: float = 0.7
     temperature: float = 0.4

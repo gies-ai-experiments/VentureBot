@@ -1,4 +1,4 @@
-model: "gemini/gemini-1.5-flash"
+model: "openai/gpt-4o-mini"
 num_ideas: 5
 validation_threshold: 0.7
 temperature: 0.4
