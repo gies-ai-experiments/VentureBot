@@ -169,7 +169,7 @@ class VentureBotCrew:
         if not pain.get("description"):
             pending.append("USER_PAIN.description")
         if not pain.get("category"):
-            pending.append("USER_PAIN.category")
+            pending.append("USER_PAIN.category (optional)")
         if not preferences.get("interests"):
             pending.append("USER_PREFERENCES.interests (optional)")
         if not preferences.get("activities"):
@@ -185,22 +185,48 @@ class VentureBotCrew:
     ) -> str:
         history_text = summarise_history(state.history)
         pending_fields = self._pending_fields(state.memory)
+        profile = state.memory.get("USER_PROFILE", {}) or {}
+        pain = state.memory.get("USER_PAIN", {}) or {}
+
+        # If required details already exist, confirm and fast-forward to idea generation.
+        if profile.get("name") and pain.get("description"):
+            name = profile.get("name", "there")
+            pain_desc = pain.get("description", "")
+            message = (
+                f"Hi {name}! I've got your pain point saved: \"{pain_desc}\". "
+                "**Would you like me to generate a few ideas now?**"
+            )
+            state.stage = Stage.IDEA_GENERATION
+            return message
+
+        final_cta = (
+            f"**Excellent! Next I'll generate {self.config.num_ideas} idea keys to fit the lock you described - ready?**"
+        )
         description = (
             "You are VentureBot's onboarding specialist."
             "\n\nConversation history (most recent last):\n{history}\n\n"
             "Existing memory snapshot:\n{memory}\n\nPending fields:{pending}\n\n"
             "Latest user message:\n{message}\n\n"
-            "Guidelines:\n"
-            "- Offer a concise, encouraging response.\n"
-            "- If this is the first interaction, welcome the user and ask for their name.\n"
-            "- Extract any new details from the user's message and include them in memory_updates.\n"
-            "- Ask for only one missing item at a time.\n"
-            "- Reference BADM 350 concepts briefly where relevant.\n"
-            "- Set ready_for_ideas true only when name and pain description are known."
+            "Core responsibilities:\n"
+            "- Introduce yourself as VentureBot and mention the user can call you VentureBot any time.\n"
+            "- Highlight the key/lock metaphor: the idea is the key, the pain point is the lock it opens.\n"
+            "- Share the mini-timeline: learn about you -> capture pain -> generate ideas -> you pick a favorite.\n"
+            "- Use examples like Uber vs unreliable taxis or Netflix vs late fees to reinforce pain-driven innovation.\n"
+            "- Prioritise required fields: USER_PROFILE.name and USER_PAIN.description. Ask for one item at a time.\n"
+            "- For required items, if the reply is missing or 'skip', kindly ask again with encouragement.\n"
+            "- Optional items: USER_PAIN.category (functional / social / emotional / financial), USER_PREFERENCES.interests, USER_PREFERENCES.activities.\n"
+            "- When asking an optional question, append \"(type 'skip' to skip)\" so the user knows it's optional.\n"
+            "- Extract new facts from the conversation and add them to memory_updates using the exact keys provided.\n"
+            "- Celebrate helpful answers with short positive reinforcement (e.g. \"Great insight!\").\n"
+            "- Keep responses concise, friendly, and well-formatted in markdown.\n"
+            "- Do not expose raw JSON in the user message.\n"
+            "- Mark ready_for_ideas as true only when name and pain description are populated in memory.\n"
+            f"- When ready_for_ideas is true, close with the exact call-to-action: {final_cta}\n"
+            "- Otherwise, end with a single clear follow-up question for the next missing detail."
         )
         expected_output = (
-            "Return JSON using the OnboardingResponse schema with message, memory_updates,"
-            " pending_fields, and ready_for_ideas flags populated."
+            "Return JSON using the OnboardingResponse schema with message, memory_updates, pending_fields,"
+            " and ready_for_ideas populated according to the instructions."
         )
         inputs = {
             "history": history_text or "(no prior history)",
@@ -230,7 +256,7 @@ class VentureBotCrew:
         profile = state.memory.get("USER_PROFILE", {})
         founder = profile.get("name", "friend")
         pain_description = pain.get("description", "")
-        pain_category = pain.get("category", "unspecified")
+        pain_category = pain.get("category") or "unspecified"
         interests = preferences.get("interests", "")
         activities = preferences.get("activities", "")
         description = (
@@ -311,9 +337,13 @@ class VentureBotCrew:
         selected = state.memory.get("SelectedIdea", {})
         pain = state.memory.get("USER_PAIN", {})
         description = (
-            "You are VentureBot's market validator."
-            "\n\nSelected idea: {idea}\nPain point: {pain}\nCategory: {category}\n"
-            "Use business reasoning and BADM 350 concepts to evaluate feasibility and innovation."
+            "You are VentureBot's market validator (legacy ADK-inspired)."
+            "\n\nSelected idea: {idea}\nPain point: {pain}\nCategory: {category}\n\n"
+            "Instructions:\n"
+            "- Provide a concise evaluation grounded in business reasoning and BADM 350 concepts.\n"
+            "- Consider multiple dimensions internally (e.g., market opportunity, competitive landscape,"
+            " execution feasibility, innovation potential), but keep the final JSON to the provided schema.\n"
+            "- Return short, helpful notes that explain the tradeoffs and potential next steps."
         )
         expected_output = (
             "Return JSON following ValidationResponse with message and score (feasibility, innovation, overall, notes)."
@@ -321,7 +351,7 @@ class VentureBotCrew:
         inputs = {
             "idea": selected.get("idea", ""),
             "pain": pain.get("description", ""),
-            "category": pain.get("category", "unspecified"),
+            "category": pain.get("category") or "unspecified",
         }
         response = self._execute_task(
             agent_key="validator",
@@ -341,11 +371,12 @@ class VentureBotCrew:
         validation = state.memory.get("Validator", {})
         pain = state.memory.get("USER_PAIN", {})
         description = (
-            "You are VentureBot's product strategist."
+            "You are VentureBot's product strategist (legacy ADK PM mapping)."
             "\n\nSelected idea: {idea}\nPain point: {pain}\nValidation notes: {validation}\n"
             "User feedback (may be empty): {feedback}\n\n"
-            "Produce a clear PRD with overview, personas, user stories, functional & non-functional requirements,"
-            " success metrics, and end with a bold CTA asking if the user wants to refine or proceed."
+            "Create a clear PRD containing: overview, target users/personas, user stories, functional requirements,"
+            " non-functional requirements, and success metrics. Keep it concise and readable. End with a bold CTA"
+            " asking whether to refine or proceed to prompt engineering."
         )
         expected_output = (
             "Return JSON via ProductPlanResponse including message, prd sections, and ready_for_prompt boolean."
@@ -389,10 +420,16 @@ class VentureBotCrew:
         prd = state.memory.get("PRD", {})
         pain = state.memory.get("USER_PAIN", {})
         description = (
-            "You are VentureBot's prompt engineer."
+            "You are VentureBot's prompt engineer (legacy ADK prompt mapping)."
             "\n\nPRD JSON:{prd}\nPain point: {pain}\n\n"
-            "Deliver a single structured prompt for builders like Bolt.new."
-            " Keep it frontend-only, specify screens, components, interactions, and tie back to BADM 350 concepts."
+            "Deliver a single builder-ready prompt for tools like Bolt.new or Lovable.\n"
+            "Scope & structure:\n"
+            "- Frontend-only (no backend).\n"
+            "- Explicit screens and user flows.\n"
+            "- UI components with key properties.\n"
+            "- Interaction logic (events, transitions).\n"
+            "- Modern, responsive UI guidance.\n"
+            "- Briefly connect to relevant BADM 350 concepts when useful."
         )
         expected_output = (
             "Return JSON via PromptResponse with the user-facing message and builder_prompt string."

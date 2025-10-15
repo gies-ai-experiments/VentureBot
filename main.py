@@ -10,6 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from manager.service import VentureBotService
+from dotenv import load_dotenv
+
+# Load environment variables from a local .env file if present
+# This makes local development easier and avoids relying on shell-specific exports.
+load_dotenv(override=False)
 
 
 class CreateSessionRequest(BaseModel):
