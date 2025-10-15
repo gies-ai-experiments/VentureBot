@@ -1,15 +1,23 @@
-# Frontend Container - Chainlit UI
-FROM python:3.10-slim
-
-RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Frontend Container - React/Vite build served via Nginx
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-COPY requirements-frontend.txt ./
-RUN pip install --no-cache-dir -r requirements-frontend.txt
+COPY frontend/package*.json ./
+RUN npm ci
 
-COPY chainlit_app.py ./
+COPY frontend ./
+
+ARG VITE_BACKEND_URL=http://localhost:8000
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+RUN printf "VITE_BACKEND_URL=%s\n" "$VITE_BACKEND_URL" > .env.production
+
+RUN npm run build
+
+FROM nginx:1.25-alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
-CMD ["chainlit", "run", "chainlit_app.py", "--port", "80", "--host", "0.0.0.0", "--headless"]
+CMD ["nginx", "-g", "daemon off;"]

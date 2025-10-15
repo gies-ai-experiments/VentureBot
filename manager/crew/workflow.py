@@ -116,7 +116,7 @@ class VentureBotCrew:
                 break
             else:  # COMPLETE or any fallback
                 responses.append(
-                    "🎉 **VentureBot Tip:** Let me know if you'd like to explore new ideas or iterate on the prompt!"
+                    "**VentureBot Tip:** Let me know if you'd like to explore new ideas or iterate on the prompt!"
                 )
                 break
 
@@ -260,14 +260,15 @@ class VentureBotCrew:
         interests = preferences.get("interests", "")
         activities = preferences.get("activities", "")
         description = (
-            "You are VentureBot's idea generator.\n"
+            "You are VentureBot, the creative idea generator.\n"
+            "\nMemory snapshot (for reference only, do not quote JSON back to the user):\n{memory}\n"
             "\nInputs you MUST rely on:\n"
-            f"- Founder name: {founder}\n"
-            f"- Pain description: {pain_description or '<<missing>>'}\n"
-            f"- Pain category: {pain_category}\n"
-            f"- Interests: {interests or '<<none provided>>'}\n"
-            f"- Activities: {activities or '<<none provided>>'}\n"
-            "\nTechnical concepts to leverage (choose at least one per idea):\n"
+            f"- memory['USER_PROFILE'].name: {founder}\n"
+            f"- memory['USER_PAIN'].description: {pain_description or '<<missing>>'}\n"
+            f"- memory['USER_PAIN'].category: {pain_category}\n"
+            f"- memory['USER_PREFERENCES'].interests: {interests or '<<none provided>>'}\n"
+            f"- memory['USER_PREFERENCES'].activities: {activities or '<<none provided>>'}\n"
+            "\nTechnical concepts to weave in (choose at least one per idea):\n"
             "- Value & Productivity Paradox\n"
             "- IT as Competitive Advantage\n"
             "- E-Business Models\n"
@@ -276,20 +277,20 @@ class VentureBotCrew:
             "- Data-driven value\n"
             "- Web 2.0/3.0 & Social Media Platforms\n"
             "- Software as a Service\n"
-            "\nRole & steps:\n"
-            f"1) Generate {self.config.num_ideas} concise app ideas (≤ 15 words) that directly address the pain.\n"
-            "2) Keep each idea practical for an initial build and avoid duplicates.\n"
-            "3) Associate each idea with a short “Concept:” line naming the BADM 350 concept(s) used.\n"
-            "4) Inspire the user while staying grounded in feasible execution.\n"
-            "\nOutput formatting for the user message:\n"
+            "\nYour responsibilities:\n"
+            f"1) Generate {self.config.num_ideas} concise, distinct ideas (<= 15 words) that directly tackle the pain point.\n"
+            "2) Keep ideas practical for a first version and avoid duplicates.\n"
+            "3) After each idea, add a new line beginning with `Concept:` that names the BADM 350 concept(s) applied.\n"
+            "4) Stay motivating yet grounded; do not over-explain or rank the ideas.\n"
+            "\nUser-facing formatting rules:\n"
             f"- Present a numbered list 1..{self.config.num_ideas}.\n"
-            "- Each list item: one-line idea followed by a new line `Concept: <concept>`.\n"
-            "- Do not expose raw JSON in the user-facing message.\n"
+            "- Each item uses exactly one line for the idea text and a separate line for `Concept: ...`.\n"
+            "- Do NOT display raw JSON or memory keys to the user.\n"
             "- End with the bold call-to-action **Reply with the number of the idea you want to validate next.**\n"
             "\nStructured response requirements:\n"
             "- Return JSON compliant with IdeaGenerationResponse.\n"
-            "- Populate ideas with ids 1..{self.config.num_ideas}, each containing `idea` (≤ 15 words) and `concept`.\n"
-            "- Ensure the `message` field matches the formatting instructions above."
+            f"- Populate ideas with ids 1..{self.config.num_ideas}, each including `idea` (<= 15 words) and `concept`.\n"
+            "- Ensure the `message` value mirrors the user-facing formatting instructions exactly."
         )
         expected_output = (
             "Return JSON matching IdeaGenerationResponse with the formatted user-facing message and idea list including id, idea text, and concept."
@@ -300,6 +301,7 @@ class VentureBotCrew:
             "category": pain_category,
             "interests": interests,
             "activities": activities,
+            "memory": dump_json(state.memory) if state.memory else "{}",
         }
         response = self._execute_task(
             agent_key="idea",
@@ -336,22 +338,37 @@ class VentureBotCrew:
     def _run_validation(self, state: SessionState) -> str:
         selected = state.memory.get("SelectedIdea", {})
         pain = state.memory.get("USER_PAIN", {})
+        previous_validation = state.memory.get("Validator", {})
         description = (
-            "You are VentureBot's market validator (legacy ADK-inspired)."
-            "\n\nSelected idea: {idea}\nPain point: {pain}\nCategory: {category}\n\n"
-            "Instructions:\n"
-            "- Provide a concise evaluation grounded in business reasoning and BADM 350 concepts.\n"
-            "- Consider multiple dimensions internally (e.g., market opportunity, competitive landscape,"
-            " execution feasibility, innovation potential), but keep the final JSON to the provided schema.\n"
-            "- Return short, helpful notes that explain the tradeoffs and potential next steps."
+            "You are VentureBot, the market validation analyst."
+            "\n\nContext provided by memory:\n"
+            "- Selected idea: {idea}\n"
+            "- Pain description: {pain}\n"
+            "- Pain category: {category}\n"
+            "- Prior validation snapshot (if any): {previous}\n\n"
+            "Responsibilities:\n"
+            "1) If additional evidence would help, call the venture_web_search tool with a focused query on the idea or pain.\n"
+            "2) Synthesize the findings and your reasoning into feasibility, innovation, and overall scores (0-1 range; two decimal precision).\n"
+            "3) Reference at least one relevant BADM 350 concept (Value & Productivity Paradox, IT as Competitive Advantage, E-Business Models,\n"
+            "   Network Effects & Long Tail, Crowd-sourcing, Data-driven value, Web 2.0/3.0 & Social Media Platforms, Software as a Service).\n"
+            "4) Deliver a concise validation report for the user with this structure:\n"
+            "   - Title line: Validation Summary\n"
+            "   - Idea and Pain lines summarising the context.\n"
+            "   - Scores section with bullet points for Feasibility, Innovation, Overall (e.g., Feasibility: 0.72).\n"
+            "   - Key Signals section containing 2-3 bullet points grounded in the web search output or analytical reasoning.\n"
+            "   - Recommendation sentence explaining whether to advance, refine, or pivot.\n"
+            "   - End with the exact call-to-action: **Would you like to proceed to product development, or select a different idea?**\n"
+            "5) Use plain text markdown (no code fences, no emojis) and keep the tone supportive and practical.\n"
+            "6) In the JSON `score` object, populate feasibility, innovation, overall (floats) and notes summarising the evidence in one short paragraph."
         )
         expected_output = (
-            "Return JSON following ValidationResponse with message and score (feasibility, innovation, overall, notes)."
+            "Return JSON following ValidationResponse with the formatted user message and score object (feasibility, innovation, overall, notes)."
         )
         inputs = {
             "idea": selected.get("idea", ""),
             "pain": pain.get("description", ""),
             "category": pain.get("category") or "unspecified",
+            "previous": previous_validation or "{}",
         }
         response = self._execute_task(
             agent_key="validator",
@@ -371,12 +388,29 @@ class VentureBotCrew:
         validation = state.memory.get("Validator", {})
         pain = state.memory.get("USER_PAIN", {})
         description = (
-            "You are VentureBot's product strategist (legacy ADK PM mapping)."
-            "\n\nSelected idea: {idea}\nPain point: {pain}\nValidation notes: {validation}\n"
-            "User feedback (may be empty): {feedback}\n\n"
-            "Create a clear PRD containing: overview, target users/personas, user stories, functional requirements,"
-            " non-functional requirements, and success metrics. Keep it concise and readable. End with a bold CTA"
-            " asking whether to refine or proceed to prompt engineering."
+            "You are VentureBot, the supportive product manager."
+            "\n\nContext:\n"
+            "- Selected idea (memory['SelectedIdea']): {idea}\n"
+            "- Pain point (memory['USER_PAIN']): {pain}\n"
+            "- Validation notes (memory['Validator'].notes): {validation}\n"
+            "- Additional feedback or refinement request: {feedback}\n\n"
+            "Your responsibilities:\n"
+            "1) Call the venture_web_search tool if market context, competitor examples, or trend data would strengthen the PRD.\n"
+            "2) Produce a readable PRD with the following sections: Overview (1 sentence with value prop), Target Users"
+            " (2-3 personas with a primary need), User Stories (3-5 in 'As a ... I want ... so that ...' format),"
+            " Functional Requirements (3-4 bullets), Non-functional Requirements (2-3 bullets), and Success Metrics"
+            " (2-3 measurable KPIs).\n"
+            "3) Highlight how the product addresses the pain and reference at least one BADM 350 concept such as Value"
+            " & Productivity Paradox, IT as Competitive Advantage, E-Business Models, Network Effects & Long Tail,"
+            " Crowd-sourcing, Data-driven value, Web 2.0/3.0 & Social Media Platforms, or Software as a Service.\n"
+            "4) Keep the tone practical, concise, and encouraging. Never expose raw JSON or memory keys in the user"
+            " message. Celebrate progress where appropriate.\n"
+            "5) End with the exact call-to-action: **Ready to build your product with no-code tools, or would you like to refine the plan further?**\n"
+            "\nStructured output requirements:\n"
+            "- Return JSON via ProductPlanResponse. The prd section must contain Overview, Target Users, User Stories,"
+            " Functional Requirements, Non-functional Requirements, and Success Metrics as described.\n"
+            "- If the user feedback indicates they want to proceed without changes, set ready_for_prompt to true so the"
+            " workflow moves to prompt engineering; otherwise, keep it false."
         )
         expected_output = (
             "Return JSON via ProductPlanResponse including message, prd sections, and ready_for_prompt boolean."
@@ -410,7 +444,7 @@ class VentureBotCrew:
         proceed_tokens = {"proceed", "continue", "next", "looks good", "go ahead"}
         if any(token in lowered for token in proceed_tokens):
             state.stage = Stage.PROMPT_ENGINEERING
-            return "Perfect — I'll craft the no-code builder prompt now."
+            return "Perfect - I'll craft the no-code builder prompt now."
 
         # Otherwise treat as refinement feedback
         response = self._run_product_manager(state, user_feedback=user_message)
@@ -422,14 +456,17 @@ class VentureBotCrew:
         description = (
             "You are VentureBot's prompt engineer (legacy ADK prompt mapping)."
             "\n\nPRD JSON:{prd}\nPain point: {pain}\n\n"
-            "Deliver a single builder-ready prompt for tools like Bolt.new or Lovable.\n"
-            "Scope & structure:\n"
-            "- Frontend-only (no backend).\n"
-            "- Explicit screens and user flows.\n"
-            "- UI components with key properties.\n"
-            "- Interaction logic (events, transitions).\n"
-            "- Modern, responsive UI guidance.\n"
-            "- Briefly connect to relevant BADM 350 concepts when useful."
+            "Responsibilities:\n"
+            "1) Generate one self-contained prompt (<= 10,000 tokens) suitable for Bolt.new, Lovable, or similar builders.\n"
+            "2) Keep scope strictly frontend-only; do not introduce authentication, databases, or backend services unless explicitly requested.\n"
+            "3) Organise the prompt into clear markdown sections such as Overview & Goal, Screen/Page Breakdown, Components & Reuse, Layout & Styling (Tailwind-style guidance, dark-mode-first), Interaction & State Logic, and Accessibility/UX notes.\n"
+            "4) Define key screens including Home/Dashboard, core interaction flows, optional showcase/pricing/support screens when relevant.\n"
+            "5) For each screen describe layout grids/columns, hero sections, cards, buttons, reusable elements, and responsive behaviour.\n"
+            "6) Detail user flows with readable chains like 'User clicks X -> Y animates -> modal displays option Z', covering edge cases and visual feedback.\n"
+            "7) List UI components with props/variants (buttons, cards, modals, accordions, sliders, forms, tooltips, toggles) and reuse strategy.\n"
+            "8) Reference relevant BADM 350 concepts (e.g., UX behavior modeling, data-driven value) when explaining design choices.\n"
+            "9) Summarise the pain point alignment and ensure the tone is practical, confident, and copy-paste ready.\n"
+            "10) Save the raw prompt to memory['BuilderPrompt'] and present a user-facing rendering without code fences."
         )
         expected_output = (
             "Return JSON via PromptResponse with the user-facing message and builder_prompt string."
