@@ -16,7 +16,10 @@ const createSession = async (userId) => {
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || 'Unable to create a VentureBot session.');
+    const error = new Error(text || 'Unable to create a VentureBot session.');
+    error.status = response.status;
+    error.statusText = response.statusText;
+    throw error;
   }
 
   return response.json();
@@ -32,7 +35,10 @@ const postChatMessage = async (sessionId, content) => {
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || 'Unable to reach the chatbot backend.');
+    const error = new Error(text || 'Unable to reach the chatbot backend.');
+    error.status = response.status;
+    error.statusText = response.statusText;
+    throw error;
   }
 
   const payload = await response.json();
@@ -124,50 +130,96 @@ function App() {
       isPending: true,
     };
 
-    setMessages((prev) => [...prev, userMessage, pendingAssistant]);
-    setDraft('');
-    setIsSending(true);
-
-    try {
-      const payload = await postChatMessage(session.id, trimmed);
-      setSession((prev) =>
-        prev
-          ? {
-              ...prev,
-              stage: payload.stage ?? prev.stage,
-            }
-          : prev,
-      );
-
+    const resolvePending = (content, role = 'assistant') => {
       setMessages((prev) =>
         prev.map((message) =>
           message.id === pendingId
             ? {
                 ...message,
+                role,
                 isPending: false,
-                content:
-                  payload.message ??
-                  'VentureBot responded without a message. Please try again.',
+                content,
               }
             : message,
         ),
       );
-    } catch (error) {
-      setMessages((prev) =>
-        prev.map((message) =>
-          message.id === pendingId
+    };
+
+    setMessages((prev) => [...prev, userMessage, pendingAssistant]);
+    setDraft('');
+    setIsSending(true);
+    setError(null);
+
+    const sendWithSession = async (activeSession, allowRetry) => {
+      if (!activeSession?.id) {
+        throw new Error('Unable to reach VentureBot session.');
+      }
+
+      try {
+        const payload = await postChatMessage(activeSession.id, trimmed);
+        setSession((prev) =>
+          prev && prev.id === activeSession.id
             ? {
-                ...message,
-                role: 'system',
-                isPending: false,
-                content:
-                  error instanceof Error
-                    ? error.message
-                    : 'Unexpected error contacting VentureBot.',
-            }
-            : message,
-        ),
-      );
+                ...prev,
+                stage: payload.stage ?? prev.stage,
+              }
+            : prev,
+        );
+
+        const assistantReply =
+          payload.message ??
+          'VentureBot responded without a message. Please try again.';
+        resolvePending(assistantReply, 'assistant');
+      } catch (err) {
+        const messageText =
+          err instanceof Error
+            ? err.message || 'Unexpected error contacting VentureBot.'
+            : 'Unexpected error contacting VentureBot.';
+        const statusCode =
+          typeof err === 'object' && err !== null && 'status' in err
+            ? err.status
+            : undefined;
+
+        const isUnknownSession =
+          statusCode === 404 ||
+          (typeof messageText === 'string' &&
+            messageText.toLowerCase().includes('unknown session_id'));
+
+        if (allowRetry && isUnknownSession) {
+          const freshSession = await createSession(userId);
+          setSession({
+            id: freshSession.session_id,
+            stage: freshSession.stage,
+            userId,
+          });
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: getMessageId(),
+              role: 'system',
+              content: `Your previous session expired, so I opened a fresh one.\n\n${freshSession.initial_message}`,
+            },
+          ]);
+          return sendWithSession(
+            { id: freshSession.session_id, stage: freshSession.stage },
+            false,
+          );
+        }
+
+        throw err;
+      }
+    };
+
+    try {
+      await sendWithSession(session, true);
+    } catch (err) {
+      const messageText =
+        err instanceof Error
+          ? err.message || 'Unexpected error contacting VentureBot.'
+          : 'Unexpected error contacting VentureBot.';
+
+      resolvePending(messageText, 'system');
+      setError(messageText);
     } finally {
       setIsSending(false);
     }

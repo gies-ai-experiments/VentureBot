@@ -186,3 +186,4 @@ cython_debug/
 
 # Large build artifacts (explicit)
 venturebot-image.tar
+.vercel

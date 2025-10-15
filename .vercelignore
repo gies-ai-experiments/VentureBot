@@ -4,7 +4,10 @@ agent_venv/
 data/
 tests/
 scripts/
-src/
+.venv/
+.venv-backend/
+.chainlit/
+frontend/node_modules/
 *.log
 sessions.db
 .env
