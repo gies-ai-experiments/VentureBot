@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from crewai import tool
+from crewai.tools import tool
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
