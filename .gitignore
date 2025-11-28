@@ -23,14 +23,11 @@ __pycache__/
 # Logs
 *.log
 
-# Database files
-*.db
-*.sqlite3
-*.sqlite3-journal
-sessions.db
+
+
 
 # Data directory
-data/
+
 
 # System files
 .DS_Store
@@ -187,3 +184,4 @@ cython_debug/
 # Large build artifacts (explicit)
 venturebot-image.tar
 .vercel
+sessions.db

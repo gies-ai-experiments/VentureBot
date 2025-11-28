@@ -1,0 +1,121 @@
+---
+venturebot_user_onboarding_and_pain_point_discovery:
+  description: 'As VentureBot, conduct a warm and motivational onboarding session
+    for {user_name} focused on discovering real customer pain points and personal
+    motivations. Collect required information: user''s name and specific frustrations/pain
+    points they''ve noticed (with examples like "waiting too long for deliveries",
+    "confusing forms", "expensive subscriptions"). Gather optional information about
+    interests, hobbies, and favorite activities. Guide users to categorize their pain
+    as functional, social, emotional, or financial. Provide inspiring examples of
+    pain-driven innovations (Uber vs unreliable taxis, Netflix vs late fees). Maintain
+    encouraging tone with proper formatting, use **bold** for call-to-actions, and
+    explain the mini-timeline: learn about you → capture pain → generate ideas → you
+    pick a favorite.'
+  expected_output: 'A comprehensive user profile including: USER_PROFILE with name;
+    USER_PAIN with detailed pain point description and category (functional/social/emotional/financial);
+    USER_PREFERENCES with interests and activities; motivational framing explaining
+    ''a business idea is a key; a pain point is the lock it opens''; celebratory acknowledgment
+    of each response; and an encouraging conclusion: **''Excellent! Next I''ll generate
+    five idea keys to fit the lock you described—ready?''** All formatted with proper
+    grammar, spacing, and bold call-to-actions.'
+  agent: venturebot_onboarding_agent
+venturebot_market_aware_idea_generation:
+  description: 'As VentureBot, generate 5-7 innovative startup ideas tailored for
+    {user_name} based on their profile and interests in {industry_focus}. Research
+    current market trends and emerging technologies. Each idea must be concise (≤15
+    words), address specific pain points, and integrate at least one technical concept:
+    Value & Productivity Paradox, IT as Competitive Advantage, E-Business Models,
+    Network Effects & Long Tail, Crowd-sourcing, Data-driven value, Web 2.0/3.0 &
+    Social Media Platforms, or Software as a Service. Present ideas in a numbered
+    list format with technical concept integration and end with a bold call-to-action
+    for idea selection.'
+  expected_output: 'A numbered list (1-7) of innovative startup concepts, each with:
+    1) A concise idea description (≤15 words) that clearly addresses user pain points,
+    2) A "Concept:" line identifying the BADM 350 technical framework applied, 3)
+    Problem statement and target market, 4) Unique value proposition, 5) Preliminary
+    feasibility assessment, and 6) A bold call-to-action: **Reply with the number
+    of the idea you want to validate next.** Format should be clean, inspiring, and
+    ready for immediate user selection and validation pipeline.'
+  agent: venturebot_idea_generator
+  context:
+  - venturebot_user_onboarding_and_pain_point_discovery
+comprehensive_market_validation:
+  description: Perform deep market validation for the selected {startup_idea} including
+    competitive landscape analysis, market size estimation, customer demand assessment,
+    regulatory considerations, and technical feasibility evaluation. Provide multi-dimensional
+    scoring across innovation potential, market opportunity, execution complexity,
+    and financial viability.
+  expected_output: 'A detailed market validation report containing: competitive analysis
+    with 10+ direct/indirect competitors, market size and growth projections, customer
+    demand indicators, regulatory landscape assessment, technical feasibility score,
+    comprehensive SWOT analysis, risk assessment matrix, and final recommendation
+    with overall viability score (1-100).'
+  agent: market_validator_agent
+  context:
+  - venturebot_market_aware_idea_generation
+venturebot_product_requirements_and_mvp_development:
+  description: 'As VentureBot, create a comprehensive Product Requirements Document
+    (PRD) for the selected and validated {startup_idea} that directly addresses the
+    user''s identified pain points. Structure the PRD with clear sections: Overview
+    (1 sentence + value proposition), Target Users (2-3 personas with specific needs),
+    User Stories (3-5 in "As a... I want... so that..." format), Functional Requirements
+    (3-4 bullets), and Success Metrics (2-3 measurable KPIs). Highlight how the product
+    addresses the user''s pain and leverages BADM 350 concepts (Value & Productivity
+    Paradox, IT as Competitive Advantage, E-Business Models, Network Effects & Long
+    Tail, Crowd-sourcing, Data-driven value, Web 2.0/3.0 & Social Media Platforms,
+    Software as a Service). Present the PRD in readable format with proper grammar,
+    spacing, and **bold** call-to-actions. Ask whether the user wants to refine any
+    section or proceed to no-code development guidance.'
+  expected_output: 'A comprehensive, readable PRD document including: narrative overview
+    with value proposition; 2-3 detailed target user personas with specific needs;
+    3-5 user stories in proper format; 3-4 functional requirements bullets; 2-3 measurable
+    success metrics (KPIs); clear connection to BADM 350 technical concepts; explanation
+    of how the product addresses the user''s specific pain point; celebration of progress;
+    and concluding call-to-action: **''Ready to build your product with no-code tools,
+    or would you like to refine the plan further?''** All formatted with proper grammar,
+    spacing, and encouraging tone throughout.'
+  agent: venturebot_product_manager
+  context:
+  - comprehensive_market_validation
+venturebot_no_code_builder_prompt_generation:
+  description: As VentureBot, translate the comprehensive PRD for {startup_idea} into
+    actionable, frontend-only prompts optimized for no-code builders like Bolt.new
+    and Lovable. Create a single self-contained prompt (≤10,000 tokens) that yields
+    a responsive, animated, component-based web application. Define core screens (Home/Dashboard,
+    feature pages, pricing, contact), specify user flows with interaction chains,
+    list required UI components (buttons, cards, modals, animations), and incorporate
+    BADM 350 concepts. Focus on frontend-only functionality using Tailwind CSS + Next.js
+    structure, avoiding backend, auth, or databases. Emphasize mobile-first design,
+    high visual fidelity, and clean component patterns optimized for free plan limits.
+  expected_output: 'A comprehensive, copy-paste ready builder prompt (≤10,000 tokens)
+    including: structured overview with pain point alignment; detailed core screen
+    definitions (layout, content sections, responsive behavior); user flow specifications
+    with interaction chains and visual feedback; complete UI component library with
+    Tailwind CSS strategies; technical integration requirements incorporating BADM
+    350 concepts; mobile-first responsive design patterns; reusable component patterns
+    and props; dark mode optimization with Inter/Poppins fonts; placeholder content
+    and dummy data; and a final **call-to-action**: **''Copy this prompt into Bolt.new
+    or Lovable to start building your solution, or would you like me to refine any
+    specific sections?''** Format as developer-ready documentation with clear markdown
+    sections.'
+  agent: venturebot_technical_prompt_engineer
+  context:
+  - venturebot_product_requirements_and_mvp_development
+entrepreneurship_journey_orchestration:
+  description: Synthesize insights from all specialized agents to create a comprehensive
+    entrepreneurship action plan for {user_name}. Coordinate the complete startup
+    journey from initial concept through market validation to product launch, ensuring
+    all deliverables are actionable and aligned with user goals and market realities.
+  expected_output: 'A master entrepreneurship action plan including: executive summary
+    of the complete startup opportunity; prioritized next steps with timelines and
+    success metrics; resource allocation recommendations; risk mitigation strategies;
+    key performance indicators and milestone tracking; funding strategy and timeline;
+    team building recommendations; and a 90-day startup launch roadmap with specific
+    actions and decision points.'
+  agent: manager_agent
+  context:
+  - venturebot_user_onboarding_and_pain_point_discovery
+  - venturebot_market_aware_idea_generation
+  - comprehensive_market_validation
+  - venturebot_product_requirements_and_mvp_development
+  - venturebot_no_code_builder_prompt_generation

@@ -1,2 +1,0 @@
-chainlit==1.0.200
-requests==2.32.4

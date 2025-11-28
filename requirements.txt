@@ -14,3 +14,4 @@ aiofiles==23.2.1  # For async file operations
 python-json-logger==2.0.7  # For structured logging
 deprecated==1.2.14  # Required dependency
 pytest==8.3.4
+SQLAlchemy==2.0.36
