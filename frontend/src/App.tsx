@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import "./App.css";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type ChatMessage = {
   id: string;
@@ -286,7 +288,11 @@ function App() {
                 <time>{formatTimestamp(message.created_at)}</time>
               )}
             </div>
-            <p className="message-content">{message.content}</p>
+            <div className="message-content">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            </div>
           </article>
         ))}
         <div ref={messagesEndRef} />

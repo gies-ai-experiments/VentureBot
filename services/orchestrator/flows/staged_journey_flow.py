@@ -288,8 +288,13 @@ class StagedJourneyExecutor:
         if not isinstance(result_text, str):
             result_text = str(result_text)
         
-        LOGGER.info(f"Task {task_key} output: {result_text[:100]}...")
-        return result_text.strip()
+        cleaned_result = result_text.strip()
+        if not cleaned_result:
+            LOGGER.warning(f"Task {task_key} returned empty output.")
+            cleaned_result = "I have completed the task, but I don't have any specific output to show. Let's proceed."
+
+        LOGGER.info(f"Task {task_key} output: {cleaned_result[:100]}...")
+        return cleaned_result
     
     def get_next_stage(self, current_stage: str) -> str:
         """Get the next stage after the current one."""
@@ -349,6 +354,16 @@ class StagedJourneyExecutor:
             # Determine next stage
             next_stage = self.get_next_stage(stage)
             
+            # Append next stage instruction
+            if next_stage != JourneyStage.COMPLETE:
+                next_stage_display = next_stage.replace("_", " ").title()
+                if next_stage == JourneyStage.PRD:
+                    next_stage_display = "Product Requirements (PRD)"
+                elif next_stage == JourneyStage.VALIDATION:
+                    next_stage_display = "Market Validation"
+                
+                output += f"\n\n---\n\n**Next Stage: {next_stage_display}**\n\nPlease let me know when you are ready to proceed to the {next_stage_display} stage."
+
             return StageResult(
                 stage=stage,
                 output=output,
