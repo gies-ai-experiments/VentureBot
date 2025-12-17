@@ -348,19 +348,30 @@ class StagedJourneyExecutor:
             context_key = STAGE_TO_CONTEXT_KEY.get(stage)
             if context_key:
                 setattr(context, context_key, output)
-            
-            # Determine next stage
-            next_stage = self.get_next_stage(stage)
-            
-            # Append next stage instruction
-            if next_stage != JourneyStage.COMPLETE:
+
+            # Determine next stage based on conversation state
+            # For onboarding, stay in stage until user signals readiness
+            if stage == JourneyStage.ONBOARDING:
+                # Check if user indicated they're ready to proceed
+                user_msg = context.user_message.lower() if context.user_message else ""
+                ready_signals = ["ready", "yes", "let's go", "proceed", "next", "generate", "ideas"]
+                if any(signal in user_msg for signal in ready_signals) and context.onboarding_summary:
+                    next_stage = self.get_next_stage(stage)
+                else:
+                    # Stay in onboarding for more conversation
+                    next_stage = JourneyStage.ONBOARDING
+            else:
+                next_stage = self.get_next_stage(stage)
+
+            # Only show "Next Stage" footer when actually transitioning
+            if next_stage != stage and next_stage != JourneyStage.COMPLETE:
                 next_stage_display = next_stage.replace("_", " ").title()
                 if next_stage == JourneyStage.PRD:
                     next_stage_display = "Product Requirements (PRD)"
                 elif next_stage == JourneyStage.VALIDATION:
                     next_stage_display = "Market Validation"
-                
-                output += f"\n\n---\n\n**Next Stage: {next_stage_display}**\n\nPlease let me know when you are ready to proceed to the {next_stage_display} stage."
+
+                output += f"\n\n---\n\n**Next Stage: {next_stage_display}**\n\nPlease let me know when you are ready to proceed."
 
             return StageResult(
                 stage=stage,
