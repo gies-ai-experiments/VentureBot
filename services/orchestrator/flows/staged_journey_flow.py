@@ -149,7 +149,6 @@ class StagedJourneyExecutor:
     def __init__(self) -> None:
         self._blueprint = VenturebotsAiEntrepreneurshipCoachingPlatformCrew()
         self._agent_builders = {
-            "manager_agent": self._blueprint.manager_agent,
             "venturebot_onboarding_agent": self._blueprint.venturebot_onboarding_agent,
             "venturebot_idea_generator": self._blueprint.venturebot_idea_generator,
             "market_validator_agent": self._blueprint.market_validator_agent,
@@ -162,7 +161,6 @@ class StagedJourneyExecutor:
             "comprehensive_market_validation": self._blueprint.comprehensive_market_validation,
             "venturebot_product_requirements_and_mvp_development": self._blueprint.venturebot_product_requirements_and_mvp_development,
             "venturebot_no_code_builder_prompt_generation": self._blueprint.venturebot_no_code_builder_prompt_generation,
-            "entrepreneurship_journey_orchestration": self._blueprint.entrepreneurship_journey_orchestration,
         }
     
     def _build_agent(self, agent_key: str) -> Agent:

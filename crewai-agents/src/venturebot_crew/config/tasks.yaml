@@ -1,127 +1,96 @@
 ---
-venturebot_user_onboarding_and_pain_point_discovery:
-  description: 'As VentureBot, have a CONVERSATIONAL onboarding with {user_name}.
-    CRITICAL: This is a multi-turn conversation. Ask ONE question at a time, then STOP and wait for the user response.
+# VentureBot Tasks Configuration
+# Following CrewAI best practices: 80% effort on tasks, Clear expected outputs
 
-    CONVERSATION FLOW (one message per turn):
-    Turn 1: Warm welcome + ask for their name only
-    Turn 2: After they share name, ask about a specific frustration or pain point they experience
-    Turn 3: After they share pain, ask follow-up to understand the category (functional/social/emotional/financial)
-    Turn 4: Ask about their interests and hobbies
-    Turn 5: Summarize and confirm readiness for idea generation
+venturebot_user_onboarding_and_pain_point_discovery:
+  description: >
+    You are having a CONVERSATION with {user_name}. Read the conversation history below and respond appropriately.
+
+    CONVERSATION FLOW (determine where they are based on history):
+    - No name shared yet → Welcome warmly, ask for their name
+    - Name shared, no pain point → Ask about a frustration or problem they face daily
+    - Pain shared, not categorized → Help identify if it's functional, social, emotional, or financial
+    - Pain categorized, no interests → Ask about their interests and hobbies
+    - All info gathered → Summarize and ask if ready for idea generation
 
     RULES:
-    - Ask ONLY ONE question per response
-    - Keep responses SHORT (2-4 sentences max)
-    - Wait for user input before proceeding
-    - Use encouraging tone but be concise
-    - Briefly mention the journey: pain point → ideas → validation → build
-
-    Current user message: {user_name}
-    Respond based on where they are in the conversation flow.'
-  expected_output: 'A SHORT, conversational response that asks exactly ONE question.
-    Do NOT output multiple steps or a full onboarding script.
-    Example good response: "Welcome! I''m VentureBot, here to help you discover your next venture. What''s your name?"
-    Example bad response: Outputting Step 1, Step 2, Step 3 all at once.
-    Keep it under 100 words. End with a single clear question.'
+    - Respond to what the user JUST said
+    - Ask exactly ONE question per response
+    - Keep responses under 50 words
+    - Be warm but concise
+    - Reference their previous answers to show you're listening
+  expected_output: >
+    A short response (under 50 words) that acknowledges what the user shared
+    and asks exactly ONE follow-up question. Never output multiple steps.
   agent: venturebot_onboarding_agent
+
 venturebot_market_aware_idea_generation:
-  description: 'As VentureBot, generate 5-7 innovative startup ideas tailored for
-    {user_name} based on their profile and interests in {industry_focus}. Research
-    current market trends and emerging technologies. Each idea must be concise (≤15
-    words), address specific pain points, and integrate at least one technical concept:
-    Value & Productivity Paradox, IT as Competitive Advantage, E-Business Models,
-    Network Effects & Long Tail, Crowd-sourcing, Data-driven value, Web 2.0/3.0 &
-    Social Media Platforms, or Software as a Service. Present ideas in a numbered
-    list format with technical concept integration and end with a bold call-to-action
-    for idea selection.'
-  expected_output: 'A numbered list (1-7) of innovative startup concepts, each with:
-    1) A concise idea description (≤15 words) that clearly addresses user pain points,
-    2) A "Concept:" line identifying the BADM 350 technical framework applied, 3)
-    Problem statement and target market, 4) Unique value proposition, 5) Preliminary
-    feasibility assessment, and 6) A bold call-to-action: **Reply with the number
-    of the idea you want to validate next.** Format should be clean, inspiring, and
-    ready for immediate user selection and validation pipeline.'
+  description: >
+    Generate 5-7 startup ideas for {user_name} based on their pain points from onboarding.
+
+    Each idea must:
+    - Be ≤15 words
+    - Directly address their specific pain point
+    - Include a business model (SaaS, marketplace, network effects, etc.)
+
+    Format as numbered list. End with: "**Reply with the number of the idea you'd like to explore.**"
+  expected_output: >
+    A numbered list of 5-7 startup ideas, each with concise description and business model.
+    Ends with call-to-action for selection.
   agent: venturebot_idea_generator
   context:
-  - venturebot_user_onboarding_and_pain_point_discovery
+    - venturebot_user_onboarding_and_pain_point_discovery
+
 comprehensive_market_validation:
-  description: Perform deep market validation for the selected {startup_idea} including
-    competitive landscape analysis, market size estimation, customer demand assessment,
-    regulatory considerations, and technical feasibility evaluation. Provide multi-dimensional
-    scoring across innovation potential, market opportunity, execution complexity,
-    and financial viability.
-  expected_output: 'A detailed market validation report containing: competitive analysis
-    with 10+ direct/indirect competitors, market size and growth projections, customer
-    demand indicators, regulatory landscape assessment, technical feasibility score,
-    comprehensive SWOT analysis, risk assessment matrix, and final recommendation
-    with overall viability score (1-100).'
+  description: >
+    Validate {startup_idea} with:
+    1. Market Size (TAM/SAM/SOM)
+    2. Competition (3-5 competitors)
+    3. Feasibility Score (1-100)
+    4. Key Risks (top 3)
+    5. Go/No-Go Recommendation
+
+    Be data-driven and concise. Under 500 words.
+  expected_output: >
+    Structured validation report: Market Size, Competition, Feasibility Score,
+    Risks, and Recommendation. Concise and actionable.
   agent: market_validator_agent
   context:
-  - venturebot_market_aware_idea_generation
+    - venturebot_market_aware_idea_generation
+
 venturebot_product_requirements_and_mvp_development:
-  description: 'As VentureBot, create a comprehensive Product Requirements Document
-    (PRD) for the selected and validated {startup_idea} that directly addresses the
-    user''s identified pain points. Structure the PRD with clear sections: Overview
-    (1 sentence + value proposition), Target Users (2-3 personas with specific needs),
-    User Stories (3-5 in "As a... I want... so that..." format), Functional Requirements
-    (3-4 bullets), and Success Metrics (2-3 measurable KPIs). Highlight how the product
-    addresses the user''s pain and leverages BADM 350 concepts (Value & Productivity
-    Paradox, IT as Competitive Advantage, E-Business Models, Network Effects & Long
-    Tail, Crowd-sourcing, Data-driven value, Web 2.0/3.0 & Social Media Platforms,
-    Software as a Service). Present the PRD in readable format with proper grammar,
-    spacing, and **bold** call-to-actions. Ask whether the user wants to refine any
-    section or proceed to no-code development guidance.'
-  expected_output: 'A comprehensive, readable PRD document including: narrative overview
-    with value proposition; 2-3 detailed target user personas with specific needs;
-    3-5 user stories in proper format; 3-4 functional requirements bullets; 2-3 measurable
-    success metrics (KPIs); clear connection to BADM 350 technical concepts; explanation
-    of how the product addresses the user''s specific pain point; celebration of progress;
-    and concluding call-to-action: **''Ready to build your product with no-code tools,
-    or would you like to refine the plan further?''** All formatted with proper grammar,
-    spacing, and encouraging tone throughout.'
+  description: >
+    Create a PRD for {startup_idea}:
+    1. Overview (2 sentences)
+    2. Target Users (2 personas)
+    3. User Stories (3-5 stories)
+    4. MVP Requirements (5-7 features)
+    5. Success Metrics (3 KPIs)
+
+    End with: "**Ready to generate a no-code builder prompt?**"
+  expected_output: >
+    Structured PRD with Overview, Users, Stories, Requirements, Metrics.
+    Concise and actionable.
   agent: venturebot_product_manager
   context:
-  - comprehensive_market_validation
+    - comprehensive_market_validation
+
 venturebot_no_code_builder_prompt_generation:
-  description: As VentureBot, translate the comprehensive PRD for {startup_idea} into
-    actionable, frontend-only prompts optimized for no-code builders like Bolt.new
-    and Lovable. Create a single self-contained prompt (≤10,000 tokens) that yields
-    a responsive, animated, component-based web application. Define core screens (Home/Dashboard,
-    feature pages, pricing, contact), specify user flows with interaction chains,
-    list required UI components (buttons, cards, modals, animations), and incorporate
-    BADM 350 concepts. Focus on frontend-only functionality using Tailwind CSS + Next.js
-    structure, avoiding backend, auth, or databases. Emphasize mobile-first design,
-    high visual fidelity, and clean component patterns optimized for free plan limits.
-  expected_output: 'A comprehensive, copy-paste ready builder prompt (≤10,000 tokens)
-    including: structured overview with pain point alignment; detailed core screen
-    definitions (layout, content sections, responsive behavior); user flow specifications
-    with interaction chains and visual feedback; complete UI component library with
-    Tailwind CSS strategies; technical integration requirements incorporating BADM
-    350 concepts; mobile-first responsive design patterns; reusable component patterns
-    and props; dark mode optimization with Inter/Poppins fonts; placeholder content
-    and dummy data; and a final **call-to-action**: **''Copy this prompt into Bolt.new
-    or Lovable to start building your solution, or would you like me to refine any
-    specific sections?''** Format as developer-ready documentation with clear markdown
-    sections.'
+  description: >
+    Generate a copy-paste prompt for Bolt.new or Lovable based on PRD for {startup_idea}.
+
+    Include:
+    - App name and purpose
+    - Core screens (3-5 pages)
+    - Components and layout
+    - Tailwind CSS styling
+    - Mobile-first design
+    - Sample content
+
+    Frontend-only. No backend/auth/database.
+  expected_output: >
+    Complete prompt (≤10,000 tokens) ready to paste into Bolt.new or Lovable.
+    Includes structure, screens, components, styling, and sample content.
   agent: venturebot_technical_prompt_engineer
   context:
-  - venturebot_product_requirements_and_mvp_development
-entrepreneurship_journey_orchestration:
-  description: Synthesize insights from all specialized agents to create a comprehensive
-    entrepreneurship action plan for {user_name}. Coordinate the complete startup
-    journey from initial concept through market validation to product launch, ensuring
-    all deliverables are actionable and aligned with user goals and market realities.
-  expected_output: 'A master entrepreneurship action plan including: executive summary
-    of the complete startup opportunity; prioritized next steps with timelines and
-    success metrics; resource allocation recommendations; risk mitigation strategies;
-    key performance indicators and milestone tracking; funding strategy and timeline;
-    team building recommendations; and a 90-day startup launch roadmap with specific
-    actions and decision points.'
-  agent: manager_agent
-  context:
-  - venturebot_user_onboarding_and_pain_point_discovery
-  - venturebot_market_aware_idea_generation
-  - comprehensive_market_validation
-  - venturebot_product_requirements_and_mvp_development
-  - venturebot_no_code_builder_prompt_generation
+    - venturebot_product_requirements_and_mvp_development

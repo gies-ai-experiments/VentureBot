@@ -42,30 +42,6 @@ def _available_tools(*tool_classes):
 class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
     """VenturebotsAiEntrepreneurshipCoachingPlatform crew"""
 
-    
-    @agent
-    def manager_agent(self) -> Agent:
-
-        
-        return Agent(
-            config=self.agents_config["manager_agent"],
-            
-            
-            tools=_available_tools(),
-            reasoning=False,
-            max_reasoning_attempts=None,
-            inject_date=True,
-            allow_delegation=False,
-            max_iter=25,
-            max_rpm=None,
-            max_execution_time=None,
-            llm=LLM(
-                model=DEFAULT_LLM_MODEL,
-                temperature=DEFAULT_TEMPERATURE,
-            ),
-            
-        )
-    
     @agent
     def venturebot_onboarding_agent(self) -> Agent:
 
@@ -223,15 +199,6 @@ class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
     def venturebot_no_code_builder_prompt_generation(self) -> Task:
         return Task(
             config=self.tasks_config["venturebot_no_code_builder_prompt_generation"],
-            markdown=False,
-            
-            
-        )
-    
-    @task
-    def entrepreneurship_journey_orchestration(self) -> Task:
-        return Task(
-            config=self.tasks_config["entrepreneurship_journey_orchestration"],
             markdown=False,
             
             

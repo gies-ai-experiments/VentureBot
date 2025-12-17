@@ -60,7 +60,6 @@ class StartupJourneyFlow(Flow[StartupJourneyState]):
         super().__init__(**kwargs)
         self._blueprint = VenturebotsAiEntrepreneurshipCoachingPlatformCrew()
         self._agent_builders = {
-            "manager_agent": self._blueprint.manager_agent,
             "venturebot_onboarding_agent": self._blueprint.venturebot_onboarding_agent,
             "venturebot_idea_generator": self._blueprint.venturebot_idea_generator,
             "market_validator_agent": self._blueprint.market_validator_agent,
@@ -73,7 +72,6 @@ class StartupJourneyFlow(Flow[StartupJourneyState]):
             "comprehensive_market_validation": self._blueprint.comprehensive_market_validation,
             "venturebot_product_requirements_and_mvp_development": self._blueprint.venturebot_product_requirements_and_mvp_development,
             "venturebot_no_code_builder_prompt_generation": self._blueprint.venturebot_no_code_builder_prompt_generation,
-            "entrepreneurship_journey_orchestration": self._blueprint.entrepreneurship_journey_orchestration,
         }
 
     def _base_inputs(self) -> Dict[str, Any]:
@@ -238,7 +236,8 @@ class StartupJourneyFlow(Flow[StartupJourneyState]):
         if self.state.should_stop:
             return None
 
-        plan_result = self._run_task("entrepreneurship_journey_orchestration")
+        # Journey orchestration handled by staged flow, return completion message
+        plan_result = "🎉 Congratulations! You've completed the VentureBot journey."
         self.state.entrepreneurship_plan = plan_result
         self.state.should_stop = True
         return plan_result
