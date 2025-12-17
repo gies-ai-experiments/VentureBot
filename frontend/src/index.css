@@ -1,20 +1,70 @@
-body {
+/* Import distinctive fonts */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+/* Reset and base styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #0f172a;
-  color: #f8fafc;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #0a0f1a;
+  color: #f1f5f9;
+  line-height: 1.5;
+  min-height: 100vh;
 }
 
 #root {
   min-height: 100vh;
 }
 
-* {
-  box-sizing: border-box;
-}
-
+/* Form elements inherit font */
 textarea,
 button,
-input {
+input,
+select {
   font-family: inherit;
+  font-size: inherit;
+}
+
+/* Remove default focus outlines, we'll add our own */
+:focus {
+  outline: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(6, 182, 212, 0.3);
+  color: inherit;
+}
+
+/* Placeholder styling */
+::placeholder {
+  opacity: 1;
+}
+
+/* Link styling */
+a {
+  color: #06b6d4;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: #22d3ee;
 }

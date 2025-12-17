@@ -58,6 +58,129 @@ const formatTimestamp = (value?: string) => {
   })}`;
 };
 
+// Journey stages configuration
+const JOURNEY_STAGES = [
+  { key: "onboarding", label: "Discovery", icon: "👋", description: "Share your pain point" },
+  { key: "idea_generation", label: "Ideas", icon: "💡", description: "Generate startup ideas" },
+  { key: "validation", label: "Validate", icon: "📊", description: "Market validation" },
+  { key: "prd", label: "PRD", icon: "📋", description: "Product requirements" },
+  { key: "prompt_engineering", label: "Build", icon: "🚀", description: "No-code prompts" },
+  { key: "complete", label: "Launch", icon: "🎉", description: "Ready to build!" },
+];
+
+// Quick reply suggestions based on stage
+const getQuickReplies = (stage?: string, messageCount?: number): string[] => {
+  if (!stage) return [];
+
+  switch (stage) {
+    case "onboarding":
+      if (messageCount === 0) return [];
+      if (messageCount && messageCount < 3) return [];
+      return ["Yes, I'm ready!", "Tell me more", "Let's see ideas"];
+    case "idea_generation":
+      return ["1", "2", "3", "4", "5", "Tell me more about #1"];
+    case "validation":
+      return ["Proceed to PRD", "Try a different idea", "More details please"];
+    case "prd":
+      return ["Generate prompts", "Refine requirements", "Add more features"];
+    case "prompt_engineering":
+      return ["Copy prompt", "Adjust for Lovable", "Start over"];
+    default:
+      return [];
+  }
+};
+
+function JourneyProgress({ currentStage }: { currentStage?: string }) {
+  const currentIndex = JOURNEY_STAGES.findIndex(s => s.key === currentStage);
+
+  return (
+    <div className="journey-progress">
+      <div className="journey-track">
+        {JOURNEY_STAGES.map((stage, index) => {
+          const isComplete = index < currentIndex;
+          const isCurrent = index === currentIndex;
+          const isFuture = index > currentIndex;
+
+          return (
+            <div
+              key={stage.key}
+              className={`journey-step ${isComplete ? 'complete' : ''} ${isCurrent ? 'current' : ''} ${isFuture ? 'future' : ''}`}
+            >
+              <div className="step-indicator">
+                <span className="step-icon">{stage.icon}</span>
+                {index < JOURNEY_STAGES.length - 1 && (
+                  <div className={`step-connector ${isComplete ? 'complete' : ''}`} />
+                )}
+              </div>
+              <span className="step-label">{stage.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="typing-indicator">
+      <div className="typing-avatar">🤖</div>
+      <div className="typing-content">
+        <div className="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span className="typing-text">VentureBot is thinking...</span>
+      </div>
+    </div>
+  );
+}
+
+function QuickReplies({
+  replies,
+  onSelect,
+  disabled
+}: {
+  replies: string[];
+  onSelect: (reply: string) => void;
+  disabled: boolean;
+}) {
+  if (replies.length === 0) return null;
+
+  return (
+    <div className="quick-replies">
+      {replies.map((reply) => (
+        <button
+          key={reply}
+          className="quick-reply-chip"
+          onClick={() => onSelect(reply)}
+          disabled={disabled}
+        >
+          {reply}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function StageTransition({ stage }: { stage: string }) {
+  const stageInfo = JOURNEY_STAGES.find(s => s.key === stage);
+  if (!stageInfo) return null;
+
+  return (
+    <div className="stage-transition">
+      <div className="stage-transition-content">
+        <span className="stage-icon-large">{stageInfo.icon}</span>
+        <div className="stage-info">
+          <h3>Stage: {stageInfo.label}</h3>
+          <p>{stageInfo.description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [session, setSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -67,6 +190,8 @@ function App() {
   >("idle");
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showStageTransition, setShowStageTransition] = useState(false);
+  const [previousStage, setPreviousStage] = useState<string | null>(null);
 
   const webSocketRef = useRef<WebSocket | null>(null);
   const streamingMessageRef = useRef<ChatMessage | null>(null);
@@ -79,6 +204,19 @@ function App() {
     if (!session) return "New Venture Coaching Session";
     return session.title ?? "Venture Coaching Session";
   }, [session]);
+
+  const quickReplies = useMemo(() => {
+    return getQuickReplies(session?.current_stage, messages.length);
+  }, [session?.current_stage, messages.length]);
+
+  // Handle stage transitions
+  useEffect(() => {
+    if (session?.current_stage && previousStage && session.current_stage !== previousStage) {
+      setShowStageTransition(true);
+      setTimeout(() => setShowStageTransition(false), 3000);
+    }
+    setPreviousStage(session?.current_stage || null);
+  }, [session?.current_stage]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -104,11 +242,9 @@ function App() {
         const data: SessionStartResponse = await response.json();
         if (isCancelled) return;
 
-        // Extract session from the new response format
         const sessionData = data.session;
         setSession(sessionData);
 
-        // If there's an onboarding message, add it to messages
         if (data.onboarding_message) {
           setMessages([data.onboarding_message]);
         }
@@ -189,7 +325,6 @@ function App() {
             setIsSending(false);
             break;
           case "stage_update":
-            // Update session with new stage info
             setSession(parsed.data.session);
             break;
           case "error":
@@ -213,9 +348,10 @@ function App() {
     };
   };
 
-  const submitMessage = () => {
+  const submitMessage = (messageOverride?: string) => {
+    const messageToSend = messageOverride ?? inputValue.trim();
     if (
-      !inputValue.trim() ||
+      !messageToSend ||
       !session ||
       !webSocketRef.current ||
       webSocketRef.current.readyState !== WebSocket.OPEN
@@ -224,10 +360,12 @@ function App() {
     }
 
     setIsSending(true);
-    const payload = { content: inputValue.trim() };
+    const payload = { content: messageToSend };
     webSocketRef.current.send(JSON.stringify(payload));
 
-    setInputValue("");
+    if (!messageOverride) {
+      setInputValue("");
+    }
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -242,72 +380,116 @@ function App() {
     }
   };
 
+  const handleQuickReply = (reply: string) => {
+    submitMessage(reply);
+  };
+
   return (
     <div className="app-shell">
       <header className="chat-header">
-        <div>
-          <h1>VentureBots MVP</h1>
-          <p className="subtitle">{sessionTitle}</p>
+        <div className="header-brand">
+          <div className="logo-mark">
+            <span className="logo-icon">🚀</span>
+          </div>
+          <div>
+            <h1>VentureBot</h1>
+            <p className="subtitle">AI Entrepreneurship Coach</p>
+          </div>
         </div>
         <div className="header-controls">
-          {session?.current_stage && (
-            <div className="stage-badge">
-              Stage: {session.current_stage.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-            </div>
-          )}
           <div className={`connection-pill connection-pill--${status}`}>
-            {status === "ready" && "Connected"}
-            {status === "connecting" && "Connecting…"}
-            {status === "idle" && "Starting…"}
+            <span className="connection-dot"></span>
+            {status === "ready" && "Live"}
+            {status === "connecting" && "Connecting"}
+            {status === "idle" && "Starting"}
             {status === "error" && "Offline"}
           </div>
         </div>
       </header>
 
+      <JourneyProgress currentStage={session?.current_stage} />
+
+      {showStageTransition && session?.current_stage && (
+        <StageTransition stage={session.current_stage} />
+      )}
+
       <main className="chat-window">
         {messages.length === 0 && (
           <div className="empty-state">
-            <h2>Welcome to your startup coaching session</h2>
+            <div className="empty-state-icon">🔑</div>
+            <h2>Ready to unlock your startup idea?</h2>
             <p>
-              Share your idea, pain point, or goal. VentureBots will orchestrate
-              the crew and guide you through the journey.
+              A great idea is like a key, and a real pain point is the lock it opens.
+              <br />
+              Let's discover yours together.
             </p>
+            <div className="empty-state-features">
+              <div className="feature">
+                <span className="feature-icon">💡</span>
+                <span>Discover pain points</span>
+              </div>
+              <div className="feature">
+                <span className="feature-icon">📊</span>
+                <span>Validate ideas</span>
+              </div>
+              <div className="feature">
+                <span className="feature-icon">🚀</span>
+                <span>Build with AI</span>
+              </div>
+            </div>
+            <p className="empty-state-cta">Type a message below to begin your journey</p>
           </div>
         )}
 
-        {messages.map((message) => (
+        {messages.map((message, index) => (
           <article
             key={message.id}
             className={`message message--${message.role}`}
+            style={{ animationDelay: `${index * 0.05}s` }}
           >
-            <div className="message-metadata">
-              <span className="message-role">
-                {message.role === "user" ? "You" : "VentureBots"}
-              </span>
-              {message.created_at && (
-                <time>{formatTimestamp(message.created_at)}</time>
-              )}
+            <div className="message-avatar">
+              {message.role === "user" ? "👤" : "🤖"}
             </div>
-            <div className="message-content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message.content}
-              </ReactMarkdown>
+            <div className="message-bubble">
+              <div className="message-metadata">
+                <span className="message-role">
+                  {message.role === "user" ? "You" : "VentureBot"}
+                </span>
+                {message.created_at && (
+                  <time>{formatTimestamp(message.created_at)}</time>
+                )}
+              </div>
+              <div className="message-content">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.content}
+                </ReactMarkdown>
+              </div>
             </div>
           </article>
         ))}
+
+        {isSending && <TypingIndicator />}
+
         <div ref={messagesEndRef} />
       </main>
 
       <footer className="composer">
         {errorMessage && <div className="error-banner">{errorMessage}</div>}
+
+        <QuickReplies
+          replies={quickReplies}
+          onSelect={handleQuickReply}
+          disabled={!isReady || isSending}
+        />
+
         <form className="composer-form" onSubmit={handleSubmit}>
           <textarea
             name="message"
             rows={1}
             placeholder={
               isConnectInFlight
-                ? "Connecting to VentureBots…"
-                : "Describe your venture idea or ask where to start."
+                ? "Connecting to VentureBot..."
+                : "Share your idea, frustration, or ask a question..."
             }
             value={inputValue}
             onChange={(event) => setInputValue(event.target.value)}
@@ -317,13 +499,15 @@ function App() {
           <button
             type="submit"
             disabled={!isReady || isSending || !inputValue.trim()}
+            aria-label="Send message"
           >
-            {isSending ? "Sending…" : "Send"}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+            </svg>
           </button>
         </form>
         <p className="helper-text">
-          Press <kbd>Enter</kbd> to send, <kbd>Shift + Enter</kbd> for a new
-          line.
+          <kbd>Enter</kbd> to send · <kbd>Shift + Enter</kbd> for new line
         </p>
       </footer>
     </div>
