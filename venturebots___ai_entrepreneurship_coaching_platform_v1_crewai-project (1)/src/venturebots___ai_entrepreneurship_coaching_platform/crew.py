@@ -14,21 +14,29 @@ except ImportError:  # pragma: no cover - optional dependency
     SerperDevTool = None
     SerplyNewsSearchTool = None
 
+# Import OpenAI Web Search Tool for market validation
+try:
+    import sys
+    from pathlib import Path
+    # Add project root to path for importing services.tools
+    PROJECT_ROOT = Path(__file__).resolve().parents[4]
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    from services.tools.openai_web_search import OpenAIWebSearchTool
+except ImportError:
+    OpenAIWebSearchTool = None
+
 
 load_dotenv(override=False)
 
-DEFAULT_LLM_MODEL = os.getenv("OPENAI_MODEL", "gpt-5")
+# Prefer an environment override; fall back to a model ID already used elsewhere in this repo.
+DEFAULT_LLM_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 DEFAULT_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
 
 
 def _available_tools(*tool_classes):
     """Instantiate available tool classes, ignoring missing optional dependencies."""
     return [tool_cls() for tool_cls in tool_classes if callable(tool_cls)]
-
-
-
-
-
 
 @CrewBase
 class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
@@ -112,7 +120,7 @@ class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
             config=self.agents_config["market_validator_agent"],
             
             
-            tools=_available_tools(SerperDevTool, SerplyNewsSearchTool),
+            tools=_available_tools(OpenAIWebSearchTool),
             reasoning=False,
             max_reasoning_attempts=None,
             inject_date=True,

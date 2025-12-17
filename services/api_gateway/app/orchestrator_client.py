@@ -30,15 +30,18 @@ async def generate_assistant_reply(
     Returns:
         Tuple of (reply_text, next_stage, updated_context_json)
     """
+    LOGGER.info("Generating assistant reply for session %s, stage: %s", session_id, current_stage)
 
     def _run() -> Tuple[str, str, str]:
         try:
-            return orchestrator.generate_response(
+            result = orchestrator.generate_response(
                 session_id=session_id,
                 messages=conversation,
                 current_stage=current_stage,
                 stored_context_json=stored_context_json,
             )
+            LOGGER.info("Assistant reply generated for session %s, next stage: %s", session_id, result[1])
+            return result
         except Exception as exc:
             LOGGER.error(
                 "Orchestrator execution failed for session %s: %s",
@@ -74,10 +77,11 @@ async def run_onboarding(
     Returns:
         Tuple of (onboarding_output, next_stage, updated_context_json)
     """
+    LOGGER.info("Running auto-onboarding for session %s", session_id)
 
     def _run() -> Tuple[str, str, str]:
         try:
-            return orchestrator.run_onboarding(
+            result = orchestrator.run_onboarding(
                 session_id=session_id,
                 stored_context_json=stored_context_json,
             )

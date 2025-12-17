@@ -54,6 +54,7 @@ async def create_session(
     If auto_start is True (default), the onboarding agent will automatically
     run and its output will be included in the response.
     """
+    LOGGER.info("Creating new chat session with title: %s", payload.title)
     session = ChatSession(
         title=payload.title,
         current_stage=JourneyStage.ONBOARDING.value,
@@ -62,16 +63,19 @@ async def create_session(
     db.add(session)
     db.commit()
     db.refresh(session)
+    LOGGER.info("Created session: %s", session.id)
     
     onboarding_message = None
     
     if payload.auto_start:
         # Auto-run the onboarding agent
+        LOGGER.info("Auto-starting onboarding for session: %s", session.id)
         try:
             onboarding_output, next_stage, updated_context = await run_onboarding(
                 session_id=session.id,
                 stored_context_json=session.stage_context or "{}",
             )
+            LOGGER.info("Onboarding completed for session %s, next stage: %s", session.id, next_stage)
             
             # Save the onboarding output as an assistant message
             assistant_message = ChatMessage(
@@ -160,12 +164,14 @@ async def _process_user_message(
     stored_context = session.stage_context or "{}"
 
     # Generate response - this will run the NEXT stage
+    LOGGER.info("Generating response for session %s, current stage: %s", session.id, current_stage)
     reply_text, next_stage, updated_context = await generate_assistant_reply(
         session_id=session.id,
         conversation=conversation_payload,
         current_stage=current_stage,
         stored_context_json=stored_context,
     )
+    LOGGER.info("Response generated for session %s, next stage: %s, reply length: %d", session.id, next_stage, len(reply_text))
 
     # Save assistant response
     assistant_message = ChatMessage(
@@ -236,6 +242,7 @@ async def restart_journey(
     Previous messages are preserved for reference.
     """
     session = _fetch_session(db, session_id)
+    LOGGER.info("Restarting journey for session: %s", session_id)
     
     # Reset session state
     session.current_stage = JourneyStage.ONBOARDING.value
@@ -300,6 +307,7 @@ async def chat_websocket(websocket: WebSocket, session_id: str) -> None:
     - error: Error messages
     """
     await websocket.accept()
+    LOGGER.info("WebSocket connection accepted for session: %s", session_id)
     try:
         db = SessionLocal()
         try:
@@ -366,6 +374,7 @@ async def chat_websocket(websocket: WebSocket, session_id: str) -> None:
             )
             
     except WebSocketDisconnect:
+        LOGGER.info("WebSocket disconnected for session: %s", session_id)
         await websocket.close()
     finally:
         db.close()
