@@ -31,7 +31,7 @@ services:
       dockerfile: Dockerfile
     container_name: venturebot-frontend
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
       backend:
         condition: service_healthy

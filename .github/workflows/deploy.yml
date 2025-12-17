@@ -1,0 +1,134 @@
+name: Deploy to Radiant VM
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Radiant Cloud VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH directory
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+
+      - name: Remove stale host key
+        run: |
+          ssh-keygen -R "${{ secrets.VM_HOST }}" || true
+
+      - name: Add fresh host key
+        run: |
+          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            # Configuration
+            PROJECT_DIR="/home/ubuntu/venturebot"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="${{ github.ref_name }}"
+
+            echo "=== Deployment Started ==="
+            echo "Branch: $BRANCH"
+            echo "Project: $PROJECT_DIR"
+
+            # Ensure Docker is available
+            echo "--- Checking Docker ---"
+            if ! docker compose version &> /dev/null; then
+                echo "Error: Docker Compose not available"
+                exit 1
+            fi
+            echo "Docker Compose is available"
+
+            # Setup project directory
+            echo "--- Setting up project directory ---"
+            mkdir -p "$PROJECT_DIR"
+            cd "$PROJECT_DIR"
+
+            # Clone or update repository
+            if [ ! -d ".git" ]; then
+              echo "Cloning repository..."
+              git clone "$REPO_URL" .
+            else
+              echo "Updating repository..."
+              git fetch origin --prune
+            fi
+
+            git checkout "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+
+            # Create .env file
+            echo "--- Creating .env file ---"
+            echo "${{ secrets.ENV }}" > .env
+
+            # Update docker-compose for production (port 80)
+            echo "--- Configuring for production ---"
+
+            # Stop existing containers
+            echo "--- Stopping existing containers ---"
+            docker compose down || true
+            docker stop venturebot-backend venturebot-frontend venturebot-app 2>/dev/null || true
+            docker rm venturebot-backend venturebot-frontend venturebot-app 2>/dev/null || true
+
+            # Clean up old images
+            echo "--- Cleaning up ---"
+            docker system prune -f
+
+            # Build and start with production port mapping
+            echo "--- Building and starting services ---"
+
+            # Override frontend port to 80 for production
+            docker compose up --build -d
+
+            # Wait for services to start
+            echo "--- Waiting for services to initialize ---"
+            sleep 30
+
+            # Health checks
+            echo "--- Running health checks ---"
+
+            # Check backend
+            if curl -f -s http://localhost:8000/healthz > /dev/null 2>&1; then
+                echo "✅ Backend is healthy"
+            else
+                echo "⚠️ Backend health check failed (may still be starting)"
+            fi
+
+            # Check frontend
+            if curl -f -s http://localhost:80 > /dev/null 2>&1; then
+                echo "✅ Frontend is healthy"
+            else
+                echo "⚠️ Frontend health check failed (may still be starting)"
+            fi
+
+            # Show status
+            echo "--- Container Status ---"
+            docker compose ps
+
+            # Show logs
+            echo "--- Recent Logs ---"
+            docker compose logs --tail 30
+
+            echo ""
+            echo "=== Deployment Complete ==="
+            PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo "VM_IP")
+            echo "🌐 Frontend: http://$PUBLIC_IP"
+            echo "🔧 Backend API: http://$PUBLIC_IP:8000"
+            echo "📚 API Docs: http://$PUBLIC_IP:8000/docs"
