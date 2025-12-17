@@ -7,7 +7,7 @@ with the built-in web_search capability for real-time market research.
 
 import os
 import json
-from typing import Optional, Type
+from typing import Type
 
 import requests
 from crewai.tools import BaseTool
