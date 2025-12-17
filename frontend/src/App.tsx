@@ -392,7 +392,7 @@ function App() {
             <span className="logo-icon">🚀</span>
           </div>
           <div>
-            <h1>VentureBot</h1>
+            <h1>VentureBot <span style={{fontSize: '0.5em', color: '#10b981'}}>[PREVIEW]</span></h1>
             <p className="subtitle">{sessionTitle}</p>
           </div>
         </div>
