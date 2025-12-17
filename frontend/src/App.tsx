@@ -69,22 +69,22 @@ const JOURNEY_STAGES = [
 ];
 
 // Quick reply suggestions based on stage
-const getQuickReplies = (stage?: string, messageCount?: number): string[] => {
+// Only show for stages with clear choices, not during free-form conversation
+const getQuickReplies = (stage?: string): string[] => {
   if (!stage) return [];
 
   switch (stage) {
     case "onboarding":
-      if (messageCount === 0) return [];
-      if (messageCount && messageCount < 3) return [];
-      return ["Yes, I'm ready!", "Tell me more", "Let's see ideas"];
+      // No quick replies during conversational onboarding
+      return [];
     case "idea_generation":
-      return ["1", "2", "3", "4", "5", "Tell me more about #1"];
+      return ["1", "2", "3", "4", "5"];
     case "validation":
-      return ["Proceed to PRD", "Try a different idea", "More details please"];
+      return ["Proceed to PRD", "Try a different idea"];
     case "prd":
-      return ["Generate prompts", "Refine requirements", "Add more features"];
+      return ["Generate prompts", "Refine requirements"];
     case "prompt_engineering":
-      return ["Copy prompt", "Adjust for Lovable", "Start over"];
+      return ["Copy prompt", "Start over"];
     default:
       return [];
   }
@@ -206,8 +206,8 @@ function App() {
   }, [session]);
 
   const quickReplies = useMemo(() => {
-    return getQuickReplies(session?.current_stage, messages.length);
-  }, [session?.current_stage, messages.length]);
+    return getQuickReplies(session?.current_stage);
+  }, [session?.current_stage]);
 
   // Handle stage transitions
   useEffect(() => {

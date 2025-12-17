@@ -10,7 +10,6 @@ venv.bak/
 
 # Security
 *.pem
-.env
 
 # Python cache
 __pycache__/
@@ -31,6 +30,7 @@ __pycache__/
 
 # System files
 .DS_Store
+.Rhistory
 Thumbs.db
 
 # Node modules (if keeping frontend)
@@ -189,3 +189,4 @@ sessions.db
 # Local files
 articles/
 ncsa-admin/
+.claude/
