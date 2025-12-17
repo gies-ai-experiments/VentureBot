@@ -670,6 +670,7 @@
 
 button.quick-reply-chip {
   width: fit-content;
+  height: auto;
 }
 
 .composer button:hover:not(:disabled) {
