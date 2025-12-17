@@ -1,0 +1,56 @@
+name: Cleanup PR Preview
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    name: Cleanup Preview for PR #${{ github.event.pull_request.number }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare SSH directory
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+
+      - name: Remove stale host key
+        run: |
+          ssh-keygen -R "${{ secrets.VM_HOST }}" || true
+
+      - name: Add fresh host key
+        run: |
+          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Cleanup Preview on VM
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            PREVIEW_DIR="/home/ubuntu/venturebot-previews/pr-${PR_NUMBER}"
+            PROJECT_NAME="venturebot-pr-${PR_NUMBER}"
+
+            echo "=== Cleaning up PR #${PR_NUMBER} Preview ==="
+
+            # Stop and remove containers
+            if [ -d "$PREVIEW_DIR" ]; then
+              cd "$PREVIEW_DIR"
+              docker compose -p "$PROJECT_NAME" -f docker-compose.yml -f docker-compose.preview.yml down --volumes --remove-orphans || true
+            fi
+
+            # Remove any orphaned containers with this project name
+            docker rm -f "${PROJECT_NAME}-backend" "${PROJECT_NAME}-frontend" 2>/dev/null || true
+
+            # Remove preview directory
+            rm -rf "$PREVIEW_DIR"
+
+            # Cleanup unused images
+            docker image prune -f
+
+            echo "✅ Preview cleanup complete"
