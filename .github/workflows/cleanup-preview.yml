@@ -47,8 +47,8 @@ jobs:
             # Remove any orphaned containers with this project name
             docker rm -f "${PROJECT_NAME}-backend" "${PROJECT_NAME}-frontend" 2>/dev/null || true
 
-            # Remove preview directory
-            rm -rf "$PREVIEW_DIR"
+            # Remove preview directory (needs sudo for docker-created files)
+            sudo rm -rf "$PREVIEW_DIR"
 
             # Cleanup unused images
             docker image prune -f
