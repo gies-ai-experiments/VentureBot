@@ -393,7 +393,7 @@ function App() {
           </div>
           <div>
             <h1>VentureBot</h1>
-            <p className="subtitle">AI Entrepreneurship Coach</p>
+            <p className="subtitle">{sessionTitle}</p>
           </div>
         </div>
         <div className="header-controls">
