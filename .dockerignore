@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs and data (will be mounted as volumes)
+*.log
+data/
+
+# Testing
+.pytest_cache/
+coverage/
+.coverage
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Vercel (not needed for Docker)
+.vercel/
+vercel.json

@@ -1,3 +1,0 @@
-"""
-Subagent package for VentureBots
-""" 

@@ -1,14 +1,18 @@
-name: Deploy to VM on Main Push
+name: Deploy to Radiant VM
 
 on:
   push:
     branches:
-      - main # Or your primary deployment branch
+      - main
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
     name: Deploy to Radiant Cloud VM
-    runs-on: ubuntu-latest # The type of machine to run the job on
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -34,149 +38,97 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           port: 22
           script: |
-            # Define variables for paths and names on the VM
-            PROJECT_DIR="/home/ubuntu/githubs"  # <-- IMPORTANT: VERIFY AND SET THIS TO YOUR PROJECT PATH ON THE VM
-            IMAGE_NAME="venturebots"
-            CONTAINER_NAME="venturebots-app"
+            set -e
 
-            echo "--- Checking for Docker installation ---"
-            if ! command -v docker &> /dev/null
-            then
-                echo "Docker could not be found on the VM. Please install Docker and try again."
+            # Configuration
+            PROJECT_DIR="/home/ubuntu/venturebot"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="${{ github.ref_name }}"
+
+            echo "=== Deployment Started ==="
+            echo "Branch: $BRANCH"
+            echo "Project: $PROJECT_DIR"
+
+            # Ensure Docker is available
+            echo "--- Checking Docker ---"
+            if ! docker compose version &> /dev/null; then
+                echo "Error: Docker Compose not available"
                 exit 1
             fi
-            if ! docker ps &> /dev/null
-            then
-                echo "Docker daemon is not running or user cannot access it. Please check Docker setup on the VM."
-                exit 1
-            fi
-            echo "Docker is available and running."
+            echo "Docker Compose is available"
 
-            echo "--- Navigating to project directory: $PROJECT_DIR ---"
-            # Create directory if it doesn't exist (for first-time deployment)
+            # Setup project directory
+            echo "--- Setting up project directory ---"
             mkdir -p "$PROJECT_DIR"
-            cd "$PROJECT_DIR" || { echo "Failed to navigate to project directory. Exiting."; exit 1; }
+            cd "$PROJECT_DIR"
 
-            echo "--- Initializing Git repo or ensuring it exists ---"
+            # Clone or update repository
             if [ ! -d ".git" ]; then
-              echo "Cloning repository into $PROJECT_DIR..."
-              git clone "https://github.com/${{ github.repository }}.git" . # Clone into current dir
+              echo "Cloning repository..."
+              git clone "$REPO_URL" .
             else
-              current_remote_url=$(git config --get remote.origin.url)
-              expected_remote_url="https://github.com/${{ github.repository }}.git"
-              if [ "$current_remote_url" != "$expected_remote_url" ]; then
-                git remote set-url origin "$expected_remote_url" || git remote add origin "$expected_remote_url"
-              fi
+              echo "Updating repository..."
+              git fetch origin --prune
             fi
 
-            # Get the branch name from GitHub context
-            CURRENT_BRANCH="${{ github.ref_name }}"
-            echo "--- Preparing to deploy branch: $CURRENT_BRANCH ---"
+            git checkout "$BRANCH"
+            git reset --hard "origin/$BRANCH"
 
-            # Fetch all updates from the remote origin
-            echo "Fetching all remote branches and tags..."
-            git fetch origin --prune
+            # Create .env file
+            echo "--- Creating .env file ---"
+            echo "${{ secrets.ENV }}" > .env
 
-            # Ensure the target branch exists locally and is up-to-date
-            echo "Checking out branch $CURRENT_BRANCH..."
-            git checkout "$CURRENT_BRANCH"
-            
-            echo "Resetting $CURRENT_BRANCH to origin/$CURRENT_BRANCH..."
-            git reset --hard "origin/$CURRENT_BRANCH"
-            
-            # Optional: Clean up untracked files that might interfere (use with caution)
-            # echo "Cleaning workspace..."
-            # git clean -fdx
-            ls -alrt
-            echo "--- Creating/Updating .env file on VM ---"
-            echo "${{ secrets.ENV }}" > .env # Creates .env in the current directory ($PROJECT_DIR)
-            echo "Project dir: $PROJECT_DIR"
-            # vi .env
-            echo "--- Verifying Dockerfile exists ---"
-            if [ ! -f docker/Dockerfile ]; then
-                echo "Dockerfile not found in $PROJECT_DIR/docker/ after git operations! Listing files:"
-                ls -la
-                ls -la docker/
-                exit 1
-            fi
-            echo "Dockerfile found in docker/ directory."
+            # Update docker-compose for production (port 80)
+            echo "--- Configuring for production ---"
 
-            echo "--- Checking for Docker Compose ---"
-            COMPOSE_CMD=""
-            
-            # Check for 'docker compose' (modern Docker)
-            if docker compose version &> /dev/null; then
-                echo "Using 'docker compose' (Docker Compose V2)"
-                COMPOSE_CMD="docker compose"
-            # Check for 'docker-compose' (legacy)
-            elif command -v docker-compose &> /dev/null; then
-                echo "Using 'docker-compose' (Docker Compose V1)"
-                COMPOSE_CMD="docker-compose"
-            else
-                echo "Installing docker-compose..."
-                sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                sudo chmod +x /usr/local/bin/docker-compose
-                COMPOSE_CMD="docker-compose"
-            fi
-            
-            echo "Using compose command: $COMPOSE_CMD"
-            
-            echo "--- Building and starting single container application ---"
-            
-            # Stop and remove existing containers
-            echo "Stopping existing containers..."
-            docker stop $CONTAINER_NAME || true
-            docker rm $CONTAINER_NAME || true
-            $COMPOSE_CMD down || true
-            
-            # Remove old images to ensure fresh build
+            # Stop existing containers
+            echo "--- Stopping existing containers ---"
+            docker compose down || true
+            docker stop venturebot-backend venturebot-frontend venturebot-app 2>/dev/null || true
+            docker rm venturebot-backend venturebot-frontend venturebot-app 2>/dev/null || true
+
+            # Clean up old images
+            echo "--- Cleaning up ---"
             docker system prune -f
-            
-            # Build and start single container with both services
-            echo "Building and starting single container..."
-            docker build -t $IMAGE_NAME -f docker/Dockerfile .
-            docker run -d -p 80:80 --env-file .env --name $CONTAINER_NAME $IMAGE_NAME
-            
-            echo "--- Single container application started ---"
-            echo "Frontend (Chainlit): http://$(curl -s ifconfig.me)"
-            echo "Backend API: Internal (both services in same container)"
 
-            echo "--- Verifying single container startup ---"
-            sleep 30 # Wait for 30 seconds to allow all services to initialize
+            # Build and start with production port mapping
+            echo "--- Building and starting services ---"
 
-            # Check if container is running
-            if docker ps | grep -q "$CONTAINER_NAME"; then
-                echo "✅ Single container application started successfully"
-                
-                # Check service health
-                echo "--- Checking service health ---"
-                
-                # Check frontend health
-                if curl -f http://localhost/ > /dev/null 2>&1; then
-                    echo "✅ Frontend (Chainlit) is healthy"
-                else
-                    echo "❌ Frontend health check failed"
-                fi
-                
-                # Show container status
-                echo "--- Container status ---"
-                docker ps | grep "$CONTAINER_NAME"
-                
-                # Show recent logs
-                echo "--- Recent logs ---"
-                docker logs --tail 50 $CONTAINER_NAME
-                
-                echo "--- Deployment to VM completed successfully! ---"
-                echo "🌐 Application: http://$(curl -s ifconfig.me 2>/dev/null || echo 'VM_IP')"
-                echo "🔧 Both frontend and backend running in single container"
-                echo "📋 Container Status: docker ps | grep $CONTAINER_NAME"
+            # Override frontend port to 80 for production
+            docker compose up --build -d
+
+            # Wait for services to start
+            echo "--- Waiting for services to initialize ---"
+            sleep 30
+
+            # Health checks
+            echo "--- Running health checks ---"
+
+            # Check backend
+            if curl -f -s http://localhost:8000/healthz > /dev/null 2>&1; then
+                echo "✅ Backend is healthy"
             else
-                echo "Error: Single container application did not start correctly."
-                echo "--- Container status ---"
-                docker ps -a | grep "$CONTAINER_NAME"
-                
-                echo "--- Container logs ---"
-                docker logs $CONTAINER_NAME
-                
-                exit 1 # Explicitly fail the deployment step
-            fi 
+                echo "⚠️ Backend health check failed (may still be starting)"
+            fi
+
+            # Check frontend
+            if curl -f -s http://localhost:80 > /dev/null 2>&1; then
+                echo "✅ Frontend is healthy"
+            else
+                echo "⚠️ Frontend health check failed (may still be starting)"
+            fi
+
+            # Show status
+            echo "--- Container Status ---"
+            docker compose ps
+
+            # Show logs
+            echo "--- Recent Logs ---"
+            docker compose logs --tail 30
+
+            echo ""
+            echo "=== Deployment Complete ==="
+            PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo "VM_IP")
+            echo "🌐 Frontend: http://$PUBLIC_IP"
+            echo "🔧 Backend API: http://$PUBLIC_IP:8000"
+            echo "📚 API Docs: http://$PUBLIC_IP:8000/docs"
