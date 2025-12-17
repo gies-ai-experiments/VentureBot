@@ -428,7 +428,7 @@
 .message {
   display: flex;
   gap: 1rem;
-  max-width: 85%;
+  max-width: 80%;
   animation: messageAppear 0.3s ease;
 }
 
@@ -440,6 +440,7 @@
 .message--user {
   align-self: flex-end;
   flex-direction: row-reverse;
+  margin-right: 0.5rem;
 }
 
 .message--assistant {
@@ -460,8 +461,9 @@
 }
 
 .message--user .message-avatar {
-  background: var(--accent-gradient);
-  border-color: var(--accent-primary);
+  background: rgba(6, 182, 212, 0.2);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
 }
 
 .message-bubble {
@@ -473,8 +475,12 @@
 }
 
 .message--user .message-bubble {
-  background: var(--accent-gradient);
-  border-color: transparent;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 16px rgba(6, 182, 212, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .message-metadata {
@@ -483,18 +489,18 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
+  opacity: 0.8;
 }
 
 .message--user .message-metadata {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
 }
 
 .message-role {
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .message-content {
@@ -504,7 +510,7 @@
 }
 
 .message--user .message-content {
-  color: white;
+  color: var(--text-primary);
 }
 
 /* ============================================
@@ -579,20 +585,23 @@
 
 .quick-reply-chip {
   padding: 0.5rem 1rem;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-accent);
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.2);
   border-radius: var(--radius-full);
   color: var(--accent-primary);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .quick-reply-chip:hover:not(:disabled) {
   background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.2);
 }
 
 .quick-reply-chip:disabled {
@@ -742,7 +751,7 @@
 }
 
 .message--user .message-content code {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(6, 182, 212, 0.15);
 }
 
 .message-content pre {
@@ -784,7 +793,7 @@
 }
 
 .message--user .message-content hr {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(6, 182, 212, 0.2);
 }
 
 /* ============================================
