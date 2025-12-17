@@ -277,6 +277,7 @@ class StagedJourneyExecutor:
             try:
                 task.expected_output = task.expected_output.format(**base_inputs)
             except KeyError:
+                # Keep original expected_output if template variables are missing
                 pass
         
         # Build context from previous stages
@@ -303,6 +304,7 @@ class StagedJourneyExecutor:
             if current_index + 1 < len(STAGE_ORDER):
                 return STAGE_ORDER[current_index + 1]
         except ValueError:
+            # Current stage not in STAGE_ORDER, treat as complete
             pass
         return JourneyStage.COMPLETE
     

@@ -147,6 +147,7 @@ class StartupJourneyFlow(Flow[StartupJourneyState]):
             try:
                 task.expected_output = task.expected_output.format(**base_inputs)
             except KeyError:
+                # Keep original expected_output if template variables are missing
                 pass
 
         context_text = self._context_payload(getattr(task, "context", []))

@@ -85,6 +85,7 @@ async def run_onboarding(
                 session_id=session_id,
                 stored_context_json=stored_context_json,
             )
+            return result
         except Exception as exc:
             LOGGER.error(
                 "Onboarding execution failed for session %s: %s",
