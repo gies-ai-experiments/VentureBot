@@ -668,6 +668,10 @@
   box-shadow: var(--accent-glow);
 }
 
+button.quick-reply-chip {
+  width: fit-content;
+}
+
 .composer button:hover:not(:disabled) {
   transform: scale(1.05);
   box-shadow: 0 0 30px rgba(6, 182, 212, 0.5);
