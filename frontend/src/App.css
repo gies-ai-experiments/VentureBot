@@ -893,7 +893,39 @@
   }
 
   .quick-replies {
-    justify-content: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quick-reply-chip {
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .message {
+    max-width: 100%;
+  }
+
+  .message--user {
+    margin-right: 0;
+  }
+
+  .journey-track {
+    min-width: 400px;
+  }
+
+  .step-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+
+  .step-label {
+    display: none;
   }
 }
 
