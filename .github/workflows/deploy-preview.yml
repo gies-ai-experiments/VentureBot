@@ -124,34 +124,53 @@ jobs:
             }
             NGINX_EOF
 
-            # Create preview docker-compose override
+            # Create standalone preview docker-compose (not an override - avoids port conflicts)
             cat > docker-compose.preview.yml << COMPOSE_EOF
             services:
               backend:
+                build:
+                  context: .
+                  dockerfile: Dockerfile
                 container_name: ${PROJECT_NAME}-backend
                 ports:
                   - "${BACKEND_PORT}:8000"
+                environment:
+                  - PYTHONPATH=/app
+                  - LOG_LEVEL=INFO
+                env_file:
+                  - .env
                 volumes:
                   - ./data-pr-${PR_NUMBER}:/app/data
+                healthcheck:
+                  test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 10s
+                restart: unless-stopped
 
               frontend:
-                container_name: ${PROJECT_NAME}-frontend
                 build:
                   context: ./frontend
                   dockerfile: Dockerfile
+                container_name: ${PROJECT_NAME}-frontend
                 ports:
                   - "${FRONTEND_PORT}:80"
                 volumes:
                   - ./frontend/nginx.preview.conf:/etc/nginx/conf.d/default.conf:ro
+                depends_on:
+                  backend:
+                    condition: service_healthy
+                restart: unless-stopped
             COMPOSE_EOF
 
             # Stop existing preview if running
             echo "--- Stopping existing preview ---"
-            docker compose -p "$PROJECT_NAME" -f docker-compose.yml -f docker-compose.preview.yml down || true
+            docker compose -p "$PROJECT_NAME" -f docker-compose.preview.yml down || true
 
             # Build and start preview
             echo "--- Building and starting preview ---"
-            docker compose -p "$PROJECT_NAME" -f docker-compose.yml -f docker-compose.preview.yml up --build -d
+            docker compose -p "$PROJECT_NAME" -f docker-compose.preview.yml up --build -d
 
             # Wait for services
             echo "--- Waiting for services ---"
@@ -171,7 +190,7 @@ jobs:
                 echo "⚠️ Frontend may still be starting"
             fi
 
-            docker compose -p "$PROJECT_NAME" ps
+            docker compose -p "$PROJECT_NAME" -f docker-compose.preview.yml ps
 
             echo ""
             echo "=== Preview Deployed ==="

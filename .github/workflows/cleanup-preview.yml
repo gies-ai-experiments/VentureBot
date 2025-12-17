@@ -41,7 +41,7 @@ jobs:
             # Stop and remove containers
             if [ -d "$PREVIEW_DIR" ]; then
               cd "$PREVIEW_DIR"
-              docker compose -p "$PROJECT_NAME" -f docker-compose.yml -f docker-compose.preview.yml down --volumes --remove-orphans || true
+              docker compose -p "$PROJECT_NAME" -f docker-compose.preview.yml down --volumes --remove-orphans || true
             fi
 
             # Remove any orphaned containers with this project name
