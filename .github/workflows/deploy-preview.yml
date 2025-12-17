@@ -8,6 +8,10 @@ concurrency:
   group: preview-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   deploy-preview:
     name: Deploy Preview for PR #${{ github.event.pull_request.number }}
