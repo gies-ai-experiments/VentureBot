@@ -19,14 +19,12 @@ LOGGER = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
-# Find the crew source directory robustly, handling potential (1) suffix
-crew_dirs = list(REPO_ROOT.glob("venturebots___ai_entrepreneurship_coaching_platform_v1_crewai-project*"))
-if crew_dirs:
-    CREW_SRC_PATH = crew_dirs[0] / "src"
-    if CREW_SRC_PATH.exists() and str(CREW_SRC_PATH) not in sys.path:
-        sys.path.append(str(CREW_SRC_PATH))
+# Add crew source directory to path
+CREW_SRC_PATH = REPO_ROOT / "crewai-agents" / "src"
+if CREW_SRC_PATH.exists() and str(CREW_SRC_PATH) not in sys.path:
+    sys.path.append(str(CREW_SRC_PATH))
 
-from venturebots___ai_entrepreneurship_coaching_platform.crew import (  # noqa: E402
+from venturebot_crew.crew import (  # noqa: E402
     VenturebotsAiEntrepreneurshipCoachingPlatformCrew,
 )
 

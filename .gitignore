@@ -185,3 +185,7 @@ cython_debug/
 venturebot-image.tar
 .vercel
 sessions.db
+
+# Local files
+articles/
+ncsa-admin/

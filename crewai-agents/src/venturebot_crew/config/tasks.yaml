@@ -1,23 +1,29 @@
 ---
 venturebot_user_onboarding_and_pain_point_discovery:
-  description: 'As VentureBot, conduct a warm and motivational onboarding session
-    for {user_name} focused on discovering real customer pain points and personal
-    motivations. Collect required information: user''s name and specific frustrations/pain
-    points they''ve noticed (with examples like "waiting too long for deliveries",
-    "confusing forms", "expensive subscriptions"). Gather optional information about
-    interests, hobbies, and favorite activities. Guide users to categorize their pain
-    as functional, social, emotional, or financial. Provide inspiring examples of
-    pain-driven innovations (Uber vs unreliable taxis, Netflix vs late fees). Maintain
-    encouraging tone with proper formatting, use **bold** for call-to-actions, and
-    explain the mini-timeline: learn about you → capture pain → generate ideas → you
-    pick a favorite.'
-  expected_output: 'A comprehensive user profile including: USER_PROFILE with name;
-    USER_PAIN with detailed pain point description and category (functional/social/emotional/financial);
-    USER_PREFERENCES with interests and activities; motivational framing explaining
-    ''a business idea is a key; a pain point is the lock it opens''; celebratory acknowledgment
-    of each response; and an encouraging conclusion: **''Excellent! Next I''ll generate
-    five idea keys to fit the lock you described—ready?''** All formatted with proper
-    grammar, spacing, and bold call-to-actions.'
+  description: 'As VentureBot, have a CONVERSATIONAL onboarding with {user_name}.
+    CRITICAL: This is a multi-turn conversation. Ask ONE question at a time, then STOP and wait for the user response.
+
+    CONVERSATION FLOW (one message per turn):
+    Turn 1: Warm welcome + ask for their name only
+    Turn 2: After they share name, ask about a specific frustration or pain point they experience
+    Turn 3: After they share pain, ask follow-up to understand the category (functional/social/emotional/financial)
+    Turn 4: Ask about their interests and hobbies
+    Turn 5: Summarize and confirm readiness for idea generation
+
+    RULES:
+    - Ask ONLY ONE question per response
+    - Keep responses SHORT (2-4 sentences max)
+    - Wait for user input before proceeding
+    - Use encouraging tone but be concise
+    - Briefly mention the journey: pain point → ideas → validation → build
+
+    Current user message: {user_name}
+    Respond based on where they are in the conversation flow.'
+  expected_output: 'A SHORT, conversational response that asks exactly ONE question.
+    Do NOT output multiple steps or a full onboarding script.
+    Example good response: "Welcome! I''m VentureBot, here to help you discover your next venture. What''s your name?"
+    Example bad response: Outputting Step 1, Step 2, Step 3 all at once.
+    Keep it under 100 words. End with a single clear question.'
   agent: venturebot_onboarding_agent
 venturebot_market_aware_idea_generation:
   description: 'As VentureBot, generate 5-7 innovative startup ideas tailored for

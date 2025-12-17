@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY services/ ./services/
-COPY ["venturebots___ai_entrepreneurship_coaching_platform_v1_crewai-project (1)/", "./venturebots___ai_entrepreneurship_coaching_platform_v1_crewai-project (1)/"]
+COPY crewai-agents/ ./crewai-agents/
 COPY main.py .
 
 # Create data directory for SQLite database and logs

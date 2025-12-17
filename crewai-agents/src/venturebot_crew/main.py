@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from venturebots___ai_entrepreneurship_coaching_platform.crew import VenturebotsAiEntrepreneurshipCoachingPlatformCrew
+from venturebot_crew.crew import VenturebotsAiEntrepreneurshipCoachingPlatformCrew
 
 # This main file is intended to be a way for your to run your
 # crew locally, so refrain from adding unnecessary logic into this file.
