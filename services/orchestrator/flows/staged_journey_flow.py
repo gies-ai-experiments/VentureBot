@@ -348,12 +348,29 @@ class StagedJourneyExecutor:
                 setattr(context, context_key, output)
 
             # Determine next stage based on conversation state
-            # For onboarding, stay in stage until user signals readiness
+            # For onboarding, stay in stage until user explicitly signals readiness
             if stage == JourneyStage.ONBOARDING:
-                # Check if user indicated they're ready to proceed
                 user_msg = context.user_message.lower() if context.user_message else ""
-                ready_signals = ["ready", "yes", "let's go", "proceed", "next", "generate", "ideas"]
-                if any(signal in user_msg for signal in ready_signals) and context.onboarding_summary:
+
+                # Only advance if user explicitly asks for ideas with clear intent
+                # Must be a deliberate request, not incidental word usage
+                explicit_ready_phrases = [
+                    "show me ideas", "see ideas", "see some ideas",
+                    "generate ideas", "ready for ideas", "want ideas",
+                    "let's see ideas", "give me ideas", "i'm ready",
+                    "yes please", "yes, i'm ready", "yeah show me",
+                    "ready to see", "proceed to ideas"
+                ]
+
+                is_explicit_ready = any(phrase in user_msg for phrase in explicit_ready_phrases)
+
+                # Also require that we have substantial context (user shared pain + interests)
+                has_context = (
+                    context.onboarding_summary and
+                    len(context.conversation_history) >= 4  # At least 4 exchanges
+                )
+
+                if is_explicit_ready and has_context:
                     next_stage = self.get_next_stage(stage)
                 else:
                     # Stay in onboarding for more conversation

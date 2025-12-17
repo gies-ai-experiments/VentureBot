@@ -568,11 +568,10 @@ If the user asks anything outside your scope, immediately delegate to the Manage
 ## Evolution Notes (from Commit History)
 
 ### Major Improvements Over Time
-1. **Chainlit Migration (Dec 2024):** Replaced Streamlit with professional Chainlit interface
-2. **Real-Time Streaming (Dec 2024):** Added SSE streaming for character-by-character responses
-3. **Enhanced Market Intelligence (Jan 2025):** Upgraded from basic scoring to comprehensive analysis with visual dashboards
-4. **Pain-Point Refactor (Jan 2025):** Shifted from generic onboarding to pain-first approach
-5. **HTML → Markdown Fix (Jan 2025):** Eliminated raw HTML tags in favor of markdown formatting
+1. **Real-Time Streaming (Dec 2024):** Added SSE streaming for character-by-character responses
+2. **Enhanced Market Intelligence (Jan 2025):** Upgraded from basic scoring to comprehensive analysis with visual dashboards
+3. **Pain-Point Refactor (Jan 2025):** Shifted from generic onboarding to pain-first approach
+4. **HTML → Markdown Fix (Jan 2025):** Eliminated raw HTML tags in favor of markdown formatting
 
 ### UX Issues Fixed
 - JSON formatting in idea generator (raw JSON → readable list)
