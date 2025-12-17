@@ -216,8 +216,6 @@ class StagedJourneyExecutor:
                 if value:
                     snippets.append(f"Output from {stage}:\n{value}")
         
-                    snippets.append(f"Output from {stage}:\n{value}")
-        
         combined_context = "\n\n---\n\n".join(snippets) if snippets else ""
         LOGGER.info(f"Built context for stage {current_stage} with length {len(combined_context)}")
         return combined_context
