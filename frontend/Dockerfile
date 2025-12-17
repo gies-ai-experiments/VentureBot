@@ -14,7 +14,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application with empty API base URL (uses relative paths for nginx proxy)
+ENV VITE_API_BASE_URL=""
 RUN npm run build
 
 # ============================================
