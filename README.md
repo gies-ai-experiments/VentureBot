@@ -68,5 +68,36 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 ## Deployment
 `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`) to a VM using `docker compose`. Vercel/Chainlit deployments are not used.
 
+## PR Preview Deployments
+
+Every pull request automatically gets a preview deployment on the VM.
+
+### How it works
+- **On PR open/update**: GitHub Actions deploys your branch to isolated ports
+- **Port mapping**: PR #N → Frontend `:3000+N`, Backend `:8000+N`
+- **Example**: PR #59 → `http://<VM_IP>:3059` (frontend), `http://<VM_IP>:8059` (backend)
+- **On PR close/merge**: Preview containers and data are automatically cleaned up
+
+### What to expect
+1. Open a PR against `main`
+2. Wait ~1-2 min for the deployment workflow to complete
+3. A bot comment will appear on your PR with preview URLs:
+   ```
+   🚀 Preview Deployment Ready
+   Frontend: http://<VM_IP>:<port>
+   API Docs: http://<VM_IP>:<port>/docs
+   ```
+4. Test your changes at the preview URL
+5. When the PR is merged or closed, the preview is automatically removed
+
+### Limitations
+- Port range: PR numbers 1-999 supported (ports 3001-3999, 8001-8999)
+- Each preview has isolated data (separate SQLite database)
+- Previews share VM resources with production—avoid load testing on previews
+
+### Workflows
+- `.github/workflows/deploy-preview.yml` - Deploys PR previews
+- `.github/workflows/cleanup-preview.yml` - Cleans up on PR close
+
 ## Contributing
 See `AGENTS.md`.
