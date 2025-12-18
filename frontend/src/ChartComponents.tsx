@@ -93,7 +93,7 @@ export function TrendLineChart({ data }: { data: TrendDataPoint[] }) {
           
           {data.map((d, i) => {
              const maxVal = Math.max(...data.map(p => p.value)) || 100;
-             const x = (i / (data.length - 1)) * 100;
+             const x = data.length === 1 ? 50 : (i / (data.length - 1)) * 100;
              const y = 50 - (d.value / maxVal) * 50;
              return (
                <g key={i}>
