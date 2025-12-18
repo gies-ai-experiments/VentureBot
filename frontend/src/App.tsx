@@ -346,7 +346,6 @@ function App() {
             streamingMessageRef.current = null;
             setMessages((previous) => [
               ...previous.filter((msg) => msg.id !== "streaming"),
-              ...previous.filter((msg) => msg.id !== "streaming"),
               extractGraphData(parsed.data),
             ]);
             setIsSending(false);
