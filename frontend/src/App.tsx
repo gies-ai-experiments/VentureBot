@@ -3,12 +3,15 @@ import type { FormEvent, KeyboardEvent } from "react";
 import "./App.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { DataVisualizer } from "./ChartComponents";
+import type { GraphData } from "./ChartComponents";
 
 type ChatMessage = {
   id: string;
   session_id: string;
   role: "user" | "assistant";
   content: string;
+  graph_data?: GraphData; // Optional graph data from backend
   created_at?: string;
 };
 
@@ -38,6 +41,29 @@ type GatewayEvent =
 const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
   "http://localhost:8000";
+
+const extractGraphData = (message: ChatMessage): ChatMessage => {
+  // Regex to find JSON block at the end of the message: ```json { ... } ```
+  const jsonBlockRegex = /```json\s*(\{[\s\S]*?"json_graph_data"[\s\S]*?\})\s*```/;
+  const match = message.content.match(jsonBlockRegex);
+
+  if (match && match[1]) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      if (parsed.json_graph_data) {
+        // Return message with graph data and content STRIPPED of the JSON block
+        return {
+          ...message,
+          content: message.content.replace(match[0], '').trim(),
+          graph_data: parsed.json_graph_data
+        };
+      }
+    } catch (e) {
+      console.error("Failed to parse graph data JSON", e);
+    }
+  }
+  return message;
+};
 
 const toWebSocketUrl = (baseUrl: string) => {
   if (baseUrl.startsWith("https://")) {
@@ -320,7 +346,8 @@ function App() {
             streamingMessageRef.current = null;
             setMessages((previous) => [
               ...previous.filter((msg) => msg.id !== "streaming"),
-              parsed.data,
+              ...previous.filter((msg) => msg.id !== "streaming"),
+              extractGraphData(parsed.data),
             ]);
             setIsSending(false);
             break;
@@ -463,6 +490,7 @@ function App() {
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.content}
                 </ReactMarkdown>
+                {message.graph_data && <DataVisualizer data={message.graph_data} />}
               </div>
             </div>
           </article>

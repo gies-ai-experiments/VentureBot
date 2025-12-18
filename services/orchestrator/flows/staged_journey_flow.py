@@ -359,15 +359,18 @@ class StagedJourneyExecutor:
                     "generate ideas", "ready for ideas", "want ideas",
                     "let's see ideas", "give me ideas", "i'm ready",
                     "yes please", "yes, i'm ready", "yeah show me",
-                    "ready to see", "proceed to ideas"
+                    "ready to see", "proceed to ideas",
+                    "validate", "market validation", "go to validation",
+                    "skip onboarding"
                 ]
 
                 is_explicit_ready = any(phrase in user_msg for phrase in explicit_ready_phrases)
 
                 # Also require that we have substantial context (user shared pain + interests)
+                # Relaxed length check to allow faster progression
                 has_context = (
-                    context.onboarding_summary and
-                    len(context.conversation_history) >= 4  # At least 4 exchanges
+                    context.onboarding_summary is not None or
+                    len(context.conversation_history) >= 2  # At least 2 exchanges
                 )
 
                 if is_explicit_ready and has_context:

@@ -30,8 +30,8 @@ except ImportError:
 load_dotenv(override=False)
 
 # Prefer an environment override; fall back to a model ID already used elsewhere in this repo.
-DEFAULT_LLM_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
-DEFAULT_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
+DEFAULT_LLM_MODEL = os.getenv("OPENAI_MODEL", "openai/gpt-5-mini")
+DEFAULT_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "1"))
 
 
 def _available_tools(*tool_classes):

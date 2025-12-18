@@ -959,3 +959,185 @@ button.quick-reply-chip {
 .chat-window::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* ============================================
+   Data Visualizations
+   ============================================ */
+.data-visualizer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  animation: fadeInUp 0.5s ease 0.2s both;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-container {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-container h3 {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+/* Funnel Chart */
+.funnel-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.funnel-layer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  color: white;
+  position: relative;
+  transition: transform var(--transition-normal);
+}
+
+.funnel-layer:hover {
+  transform: scale(1.02);
+}
+
+.funnel-tam {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(6, 182, 212, 0.2));
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  width: 100%;
+}
+
+.funnel-sam {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.25));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  width: 75%;
+}
+
+.funnel-som {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.3));
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  width: 50%;
+}
+
+.funnel-label {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.funnel-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0.1rem 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.funnel-desc {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+/* Line Chart */
+.line-chart-viz {
+  position: relative;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.line-chart-viz svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding: 0 5px;
+}
+
+.chart-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.7rem;
+}
+
+.chart-label .year { color: var(--text-muted); }
+.chart-label .val { color: var(--text-primary); font-weight: 600; }
+
+/* Heatmap */
+.heatmap-grid {
+  display: grid;
+  gap: 2px;
+  background: var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.heatmap-cell {
+  background: var(--bg-card);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.heatmap-cell.header {
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.heatmap-cell.header.competitor {
+  justify-content: flex-start;
+  color: var(--accent-primary);
+}
+
+.heatmap-cell.value {
+  padding: 0.25rem;
+}
+
+.score-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
