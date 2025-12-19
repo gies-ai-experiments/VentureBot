@@ -367,10 +367,10 @@ class StagedJourneyExecutor:
                 is_explicit_ready = any(phrase in user_msg for phrase in explicit_ready_phrases)
 
                 # Also require that we have substantial context (user shared pain + interests)
-                # Relaxed length check to allow faster progression
+                # Require both onboarding summary and sufficient conversation history
                 has_context = (
-                    context.onboarding_summary is not None or
-                    len(context.conversation_history) >= 2  # At least 2 exchanges
+                    context.onboarding_summary is not None and
+                    len(context.conversation_history) >= 4  # At least 4 exchanges
                 )
 
                 if is_explicit_ready and has_context:
