@@ -61,10 +61,14 @@ export function FunnelChart({ data }: { data: MarketSizeData }) {
 // Line Chart (Simple SVG)
 // ============================================
 export function TrendLineChart({ data }: { data: TrendDataPoint[] }) {
+  const maxVal = useMemo(() => {
+    if (!data || data.length === 0) return 100;
+    return Math.max(...data.map(d => d.value)) || 100;
+  }, [data]);
+
   const points = useMemo(() => {
     if (!data || data.length === 0) return '';
     
-    const maxVal = Math.max(...data.map(d => d.value)) || 100;
     const width = 100; // SVG coordinate space
     const height = 50; 
     
@@ -73,7 +77,7 @@ export function TrendLineChart({ data }: { data: TrendDataPoint[] }) {
       const y = height - (d.value / maxVal) * height; // Invert Y
       return `${x},${y}`;
     }).join(' ');
-  }, [data]);
+  }, [data, maxVal]);
 
   const fillPoints = `0,50 ${points} 100,50`;
 
@@ -92,7 +96,6 @@ export function TrendLineChart({ data }: { data: TrendDataPoint[] }) {
           <polyline points={points} fill="none" stroke="var(--accent-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           
           {data.map((d, i) => {
-             const maxVal = Math.max(...data.map(p => p.value)) || 100;
              const x = data.length === 1 ? 50 : (i / (data.length - 1)) * 100;
              const y = 50 - (d.value / maxVal) * 50;
              return (
