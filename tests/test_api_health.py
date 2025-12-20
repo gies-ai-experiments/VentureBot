@@ -6,14 +6,17 @@ and returning expected responses.
 """
 import pytest
 from fastapi.testclient import TestClient
+from services.api_gateway.app.main import app
 
 
-def test_healthcheck_endpoint():
+@pytest.fixture
+def client():
+    """Create a test client for the FastAPI app."""
+    return TestClient(app)
+
+
+def test_healthcheck_endpoint(client):
     """Test that the health check endpoint returns OK status."""
-    # Import here to avoid issues with database initialization in test environment
-    from services.api_gateway.app.main import app
-    
-    client = TestClient(app)
     response = client.get("/healthz")
     
     assert response.status_code == 200
@@ -22,8 +25,6 @@ def test_healthcheck_endpoint():
 
 def test_api_structure():
     """Test that the FastAPI app is properly configured."""
-    from services.api_gateway.app.main import app
-    
     # Verify app exists and has expected attributes
     assert app is not None
     assert app.title is not None
