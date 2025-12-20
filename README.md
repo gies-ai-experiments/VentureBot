@@ -42,6 +42,21 @@ npm ci
 VITE_API_BASE_URL=http://localhost:8000 npm run dev
 ```
 
+### Running Tests
+```bash
+# Install dependencies first
+pip install -r requirements.txt
+
+# Run all tests
+python -m pytest
+
+# Run specific test file
+python -m pytest tests/test_api_health.py
+
+# Run with verbose output
+python -m pytest -v
+```
+
 ## API (Gateway)
 - `POST /api/chat/sessions` creates a session (`auto_start` can run onboarding immediately).
 - `POST /api/chat/sessions/{session_id}/messages` stores a user message and returns the assistant reply.
