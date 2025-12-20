@@ -31,4 +31,5 @@ def test_api_structure():
     # Verify routers are included
     routes = [route.path for route in app.routes]
     assert "/healthz" in routes
-    assert any("/api/chat" in route for route in routes)
+    # Check for routes starting with /api/chat
+    assert any(route.startswith("/api/chat") for route in routes)
