@@ -55,7 +55,7 @@ class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
             max_reasoning_attempts=None,
             inject_date=True,
             allow_delegation=False,
-            max_iter=25,
+            max_iter=5,
             max_rpm=None,
             max_execution_time=None,
             llm=LLM(
@@ -78,7 +78,7 @@ class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
             max_reasoning_attempts=None,
             inject_date=True,
             allow_delegation=False,
-            max_iter=25,
+            max_iter=5,
             max_rpm=None,
             max_execution_time=None,
             llm=LLM(
@@ -101,7 +101,7 @@ class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
             max_reasoning_attempts=None,
             inject_date=True,
             allow_delegation=False,
-            max_iter=25,
+            max_iter=5,
             max_rpm=None,
             max_execution_time=None,
             llm=LLM(
@@ -124,7 +124,7 @@ class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
             max_reasoning_attempts=None,
             inject_date=True,
             allow_delegation=False,
-            max_iter=25,
+            max_iter=5,
             max_rpm=None,
             max_execution_time=None,
             llm=LLM(
@@ -147,7 +147,7 @@ class VenturebotsAiEntrepreneurshipCoachingPlatformCrew:
             max_reasoning_attempts=None,
             inject_date=True,
             allow_delegation=False,
-            max_iter=25,
+            max_iter=5,
             max_rpm=None,
             max_execution_time=None,
             llm=LLM(

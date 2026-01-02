@@ -187,6 +187,111 @@ class StagedJourneyExecutor:
             "startup_idea": context.startup_idea,
         }
 
+    def _run_onboarding_direct(self, context: StageContext) -> str:
+        """Run onboarding using direct LLM call (faster than CrewAI)."""
+        # Build conversation history
+        history_text = ""
+        if context.conversation_history:
+            history_text = "\n".join([
+                f"{msg.get('role', 'user').capitalize()}: {msg.get('content', '')}"
+                for msg in context.conversation_history[-10:]
+            ])
+
+        prompt = f"""You are "The Warm Guide" having a CONVERSATION with the user.
+
+CONVERSATION FLOW (determine where user is based on history):
+1. No info shared yet → Welcome warmly with the key/lock metaphor, ask for their name AND main frustration in one question
+   Example: "Welcome to VentureBot! I'm here to help you discover a startup idea. Think of it this way: a great idea is like a key, and a real pain point is the lock it opens. What's your name, and what's something that frustrates you or wastes your time regularly?"
+2. Name and pain shared → Briefly acknowledge and offer to generate ideas immediately
+   Example: "Great to meet you, [name]! [Pain] sounds like a real problem worth solving. Ready for me to generate some startup ideas that could tackle this?"
+
+RULES:
+- Respond ONLY to what the user just said
+- Keep responses under 50 words
+- Be warm, use their name once you know it
+- Use the key/lock metaphor in the first message
+- Move quickly to idea generation - don't ask too many questions
+- If user shares name AND pain point together, immediately offer to generate ideas
+
+Recent conversation:
+{history_text}
+
+User's latest message: {context.user_message}
+
+Respond with a short message (under 50 words):"""
+
+        try:
+            client = OpenAI()
+            # Use gpt-4o for direct calls (gpt-5-mini has API restrictions)
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=150,
+            )
+            result = response.choices[0].message.content.strip()
+            LOGGER.info(f"Direct onboarding response (gpt-4o): {result[:100]}...")
+            return result
+        except Exception as e:
+            LOGGER.error(f"Direct onboarding failed: {e}")
+            return "Welcome to VentureBot! What's your name, and what frustrates you most?"
+
+    def _run_idea_generation_direct(self, context: StageContext) -> str:
+        """Run idea generation using direct LLM call (faster than CrewAI)."""
+        # Get onboarding context
+        onboarding_summary = context.onboarding_summary or ""
+
+        # Build conversation history for context
+        history_text = ""
+        if context.conversation_history:
+            history_text = "\n".join([
+                f"{msg.get('role', 'user').capitalize()}: {msg.get('content', '')}"
+                for msg in context.conversation_history[-6:]
+            ])
+
+        prompt = f"""You are "The Creative Catalyst." Generate exactly 5 startup ideas based on the user's pain points.
+
+CONTEXT FROM ONBOARDING:
+{onboarding_summary}
+
+RECENT CONVERSATION:
+{history_text}
+
+REQUIREMENTS:
+- Generate exactly 5 ideas (not more, not fewer)
+- Each idea must be ≤15 words
+- Each must directly address their specific pain point
+- Each must include a business model (SaaS, marketplace, network effects, data-driven, etc.)
+
+OUTPUT FORMAT:
+Start with: "Here are 5 keys that could open your lock:"
+
+1. **[Idea Name]**: [One-line description]. Business model: [Type]
+2. **[Idea Name]**: [One-line description]. Business model: [Type]
+3. **[Idea Name]**: [One-line description]. Business model: [Type]
+4. **[Idea Name]**: [One-line description]. Business model: [Type]
+5. **[Idea Name]**: [One-line description]. Business model: [Type]
+
+End with: "**Reply with the number of the idea you'd like to explore.**"
+
+Generate the 5 ideas now:"""
+
+        try:
+            client = OpenAI()
+            # Use gpt-4o for direct calls (gpt-5-mini has API restrictions)
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.8,
+                max_tokens=500,
+            )
+            result = response.choices[0].message.content.strip()
+            LOGGER.info(f"Direct idea generation response (gpt-4o): {result[:100]}...")
+            return result
+        except Exception as e:
+            LOGGER.error(f"Direct idea generation failed: {e}")
+            return "I encountered an issue generating ideas. Could you tell me more about your pain point?"
+
     def _detect_stage_transition_intent(
         self,
         user_message: str,
@@ -245,16 +350,24 @@ Respond with JSON only (no markdown, no code blocks):
 
         try:
             client = OpenAI()
-            model = os.getenv("OPENAI_MODEL", "gpt-4o-mini").replace("openai/", "")
+            # Use gpt-4o-mini for intent detection (lightweight, fast, reliable)
+            intent_model = "gpt-4o-mini"
 
             response = client.chat.completions.create(
-                model=model,
+                model=intent_model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
                 max_tokens=100,
             )
 
-            result_text = response.choices[0].message.content.strip()
+            result_text = response.choices[0].message.content
+            if result_text is None:
+                LOGGER.warning("Intent detection returned None content")
+                return {"should_proceed": False, "confidence": 0.0, "reason": "Empty response"}
+
+            result_text = result_text.strip()
+            LOGGER.info(f"Intent detection raw response: {result_text[:200]}")
+
             # Clean up potential markdown code blocks
             if result_text.startswith("```"):
                 result_text = result_text.split("```")[1]
@@ -425,8 +538,15 @@ Respond with JSON only (no markdown, no code blocks):
         
         try:
             # Run the task for this stage
-            output = self._run_task(task_key, context, stage)
-            
+            # Use direct LLM for fast stages, CrewAI for complex stages
+            if stage == JourneyStage.ONBOARDING:
+                output = self._run_onboarding_direct(context)
+            elif stage == JourneyStage.IDEA_GENERATION:
+                output = self._run_idea_generation_direct(context)
+            else:
+                # Use CrewAI for complex stages (validation, PRD, prompt engineering)
+                output = self._run_task(task_key, context, stage)
+
             # Store the output in context
             context_key = STAGE_TO_CONTEXT_KEY.get(stage)
             if context_key:
@@ -455,32 +575,7 @@ Respond with JSON only (no markdown, no code blocks):
                     if should_proceed and confidence >= 0.5:
                         next_stage = self.get_next_stage(stage)
                         LOGGER.info(f"Transitioning from {stage} to {next_stage} (confidence: {confidence})")
-
-                        # AUTO-RUN NEXT STAGE IMMEDIATELY
-                        if next_stage != JourneyStage.COMPLETE:
-                            next_stage_display = next_stage.replace("_", " ").title()
-                            if next_stage == JourneyStage.PRD:
-                                next_stage_display = "Product Requirements (PRD)"
-                            elif next_stage == JourneyStage.VALIDATION:
-                                next_stage_display = "Market Validation"
-                            elif next_stage == JourneyStage.IDEA_GENERATION:
-                                next_stage_display = "Idea Generation"
-
-                            # Run the next stage and combine outputs
-                            next_result = self.run_stage(next_stage, context)
-                            combined_output = (
-                                f"{output}\n\n"
-                                f"---\n\n"
-                                f"**Moving to {next_stage_display}**\n\n"
-                                f"{next_result.output}"
-                            )
-                            return StageResult(
-                                stage=next_result.stage,
-                                output=combined_output,
-                                next_stage=next_result.next_stage,
-                                context=next_result.context,
-                                is_complete=next_result.is_complete,
-                            )
+                        # Don't auto-run next stage - let it run on next user message
                     else:
                         # Stay in onboarding for more conversation
                         next_stage = JourneyStage.ONBOARDING
