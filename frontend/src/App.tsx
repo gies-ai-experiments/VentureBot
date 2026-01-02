@@ -96,7 +96,7 @@ const JOURNEY_STAGES = [
 
 // Quick reply suggestions based on stage
 // Only show for stages with clear choices, not during free-form conversation
-const getQuickReplies = (stage?: string): string[] => {
+const getQuickReplies = (stage?: string, lastAssistantMessage?: string): string[] => {
   if (!stage) return [];
 
   switch (stage) {
@@ -104,9 +104,17 @@ const getQuickReplies = (stage?: string): string[] => {
       // No quick replies during conversational onboarding
       return [];
     case "idea_generation":
-      return ["1", "2", "3", "4", "5"];
+      // Only show number options if ideas have been generated
+      if (lastAssistantMessage && /Here are \d+ keys|1\.\s+\*\*/.test(lastAssistantMessage)) {
+        return ["1", "2", "3", "4", "5"];
+      }
+      return [];
     case "validation":
-      return ["Proceed to PRD", "Try a different idea"];
+      // Only show options if validation report is displayed
+      if (lastAssistantMessage && /Market Size|Feasibility|Recommendation/.test(lastAssistantMessage)) {
+        return ["Proceed to PRD", "Try a different idea"];
+      }
+      return [];
     case "prd":
       return ["Generate prompts", "Refine requirements"];
     case "prompt_engineering":
@@ -232,8 +240,10 @@ function App() {
   }, [session]);
 
   const quickReplies = useMemo(() => {
-    return getQuickReplies(session?.current_stage);
-  }, [session?.current_stage]);
+    // Get the last assistant message to check if content is ready for quick replies
+    const lastAssistantMsg = [...messages].reverse().find(m => m.role === "assistant");
+    return getQuickReplies(session?.current_stage, lastAssistantMsg?.content);
+  }, [session?.current_stage, messages]);
 
   // Handle stage transitions
   useEffect(() => {
