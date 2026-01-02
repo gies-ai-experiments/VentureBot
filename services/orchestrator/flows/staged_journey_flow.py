@@ -8,12 +8,14 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from crewai import Agent, Task, Crew, Process
+from openai import OpenAI
 
 LOGGER = logging.getLogger(__name__)
 
@@ -184,7 +186,203 @@ class StagedJourneyExecutor:
             "industry_focus": context.industry_focus,
             "startup_idea": context.startup_idea,
         }
-    
+
+    def _run_onboarding_direct(self, context: StageContext) -> str:
+        """Run onboarding using direct LLM call (faster than CrewAI)."""
+        # Build conversation history
+        history_text = ""
+        if context.conversation_history:
+            history_text = "\n".join([
+                f"{msg.get('role', 'user').capitalize()}: {msg.get('content', '')}"
+                for msg in context.conversation_history[-10:]
+            ])
+
+        prompt = f"""You are "The Warm Guide" having a CONVERSATION with the user.
+
+CONVERSATION FLOW (determine where user is based on history):
+1. No info shared yet → Welcome warmly with the key/lock metaphor, ask for their name AND main frustration in one question
+   Example: "Welcome to VentureBot! I'm here to help you discover a startup idea. Think of it this way: a great idea is like a key, and a real pain point is the lock it opens. What's your name, and what's something that frustrates you or wastes your time regularly?"
+2. Name and pain shared → Briefly acknowledge and offer to generate ideas immediately
+   Example: "Great to meet you, [name]! [Pain] sounds like a real problem worth solving. Ready for me to generate some startup ideas that could tackle this?"
+
+RULES:
+- Respond ONLY to what the user just said
+- Keep responses under 50 words
+- Be warm, use their name once you know it
+- Use the key/lock metaphor in the first message
+- Move quickly to idea generation - don't ask too many questions
+- If user shares name AND pain point together, immediately offer to generate ideas
+
+Recent conversation:
+{history_text}
+
+User's latest message: {context.user_message}
+
+Respond with a short message (under 50 words):"""
+
+        try:
+            client = OpenAI()
+            # Use gpt-4o for direct calls (gpt-5-mini has API restrictions)
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=150,
+            )
+            result = response.choices[0].message.content.strip()
+            LOGGER.info(f"Direct onboarding response (gpt-4o): {result[:100]}...")
+            return result
+        except Exception as e:
+            LOGGER.error(f"Direct onboarding failed: {e}")
+            return "Welcome to VentureBot! What's your name, and what frustrates you most?"
+
+    def _run_idea_generation_direct(self, context: StageContext) -> str:
+        """Run idea generation using direct LLM call (faster than CrewAI)."""
+        # Get onboarding context
+        onboarding_summary = context.onboarding_summary or ""
+
+        # Build conversation history for context
+        history_text = ""
+        if context.conversation_history:
+            history_text = "\n".join([
+                f"{msg.get('role', 'user').capitalize()}: {msg.get('content', '')}"
+                for msg in context.conversation_history[-6:]
+            ])
+
+        prompt = f"""You are "The Creative Catalyst." Generate exactly 5 startup ideas based on the user's pain points.
+
+CONTEXT FROM ONBOARDING:
+{onboarding_summary}
+
+RECENT CONVERSATION:
+{history_text}
+
+REQUIREMENTS:
+- Generate exactly 5 ideas (not more, not fewer)
+- Each idea must be ≤15 words
+- Each must directly address their specific pain point
+- Each must include a business model (SaaS, marketplace, network effects, data-driven, etc.)
+
+OUTPUT FORMAT:
+Start with: "Here are 5 keys that could open your lock:"
+
+1. **[Idea Name]**: [One-line description]. Business model: [Type]
+2. **[Idea Name]**: [One-line description]. Business model: [Type]
+3. **[Idea Name]**: [One-line description]. Business model: [Type]
+4. **[Idea Name]**: [One-line description]. Business model: [Type]
+5. **[Idea Name]**: [One-line description]. Business model: [Type]
+
+End with: "**Reply with the number of the idea you'd like to explore.**"
+
+Generate the 5 ideas now:"""
+
+        try:
+            client = OpenAI()
+            # Use gpt-4o for direct calls (gpt-5-mini has API restrictions)
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.8,
+                max_tokens=500,
+            )
+            result = response.choices[0].message.content.strip()
+            LOGGER.info(f"Direct idea generation response (gpt-4o): {result[:100]}...")
+            return result
+        except Exception as e:
+            LOGGER.error(f"Direct idea generation failed: {e}")
+            return "I encountered an issue generating ideas. Could you tell me more about your pain point?"
+
+    def _detect_stage_transition_intent(
+        self,
+        user_message: str,
+        current_stage: str,
+        conversation_history: List[Dict[str, str]],
+    ) -> Dict[str, Any]:
+        """
+        Use LLM to detect if user wants to proceed to next stage.
+
+        Returns a dict with:
+            - should_proceed: bool
+            - confidence: float (0.0-1.0)
+            - reason: str
+        """
+        next_stage = self.get_next_stage(current_stage)
+        next_stage_display = next_stage.replace("_", " ").title()
+        current_stage_display = current_stage.replace("_", " ").title()
+
+        # Format recent conversation for context
+        recent_history = conversation_history[-6:] if conversation_history else []
+        history_text = "\n".join([
+            f"{msg.get('role', 'user').capitalize()}: {msg.get('content', '')[:200]}"
+            for msg in recent_history
+        ]) if recent_history else "No previous conversation"
+
+        prompt = f"""Analyze the user's message and conversation context to determine their intent.
+
+Current stage: {current_stage_display}
+Next stage: {next_stage_display}
+
+Recent conversation:
+{history_text}
+
+User's latest message: "{user_message}"
+
+Determine if the user wants to PROCEED to the next stage ({next_stage_display}) or CONTINUE with the current stage.
+
+Signs user wants to proceed (be generous - when in doubt, proceed):
+- Expressing readiness or satisfaction with current stage
+- Asking to see results, ideas, or validation
+- Indicating they've shared enough information
+- Explicitly asking to move forward or skip ahead
+- Saying things like "let's move on", "what's next", "I'm ready", "yes", "sure", "ok", "go ahead"
+- Responding affirmatively to an offer to generate ideas
+- Any positive or agreeing response after sharing their pain point
+
+Signs user wants to continue current stage:
+- Explicitly asking follow-up questions about current topic
+- Explicitly wanting to explore more or add more details
+- Asking clarifying questions about the process
+
+IMPORTANT: Bias towards proceeding. If the user has shared their name and a pain point, and gives any affirmative or positive response, they likely want to proceed.
+
+Respond with JSON only (no markdown, no code blocks):
+{{"should_proceed": true or false, "confidence": 0.0 to 1.0, "reason": "brief explanation"}}"""
+
+        try:
+            client = OpenAI()
+            # Use gpt-4o-mini for intent detection (lightweight, fast, reliable)
+            intent_model = "gpt-4o-mini"
+
+            response = client.chat.completions.create(
+                model=intent_model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                max_tokens=100,
+            )
+
+            result_text = response.choices[0].message.content
+            if result_text is None:
+                LOGGER.warning("Intent detection returned None content")
+                return {"should_proceed": False, "confidence": 0.0, "reason": "Empty response"}
+
+            result_text = result_text.strip()
+            LOGGER.info(f"Intent detection raw response: {result_text[:200]}")
+
+            # Clean up potential markdown code blocks
+            if result_text.startswith("```"):
+                result_text = result_text.split("```")[1]
+                if result_text.startswith("json"):
+                    result_text = result_text[4:]
+            result_text = result_text.strip()
+
+            result = json.loads(result_text)
+            LOGGER.info(f"Intent detection result: {result}")
+            return result
+
+        except Exception as e:
+            LOGGER.warning(f"Intent detection failed: {e}, defaulting to no transition")
+            return {"should_proceed": False, "confidence": 0.0, "reason": f"Detection failed: {e}"}
+
     def _build_context_text(self, context: StageContext, current_stage: str) -> str:
         """
         Build context text from previous stages to inform the current agent.
@@ -340,48 +538,54 @@ class StagedJourneyExecutor:
         
         try:
             # Run the task for this stage
-            output = self._run_task(task_key, context, stage)
-            
+            # Use direct LLM for fast stages, CrewAI for complex stages
+            if stage == JourneyStage.ONBOARDING:
+                output = self._run_onboarding_direct(context)
+            elif stage == JourneyStage.IDEA_GENERATION:
+                output = self._run_idea_generation_direct(context)
+            else:
+                # Use CrewAI for complex stages (validation, PRD, prompt engineering)
+                output = self._run_task(task_key, context, stage)
+
             # Store the output in context
             context_key = STAGE_TO_CONTEXT_KEY.get(stage)
             if context_key:
                 setattr(context, context_key, output)
 
-            # Determine next stage based on conversation state
-            # For onboarding, stay in stage until user explicitly signals readiness
+            # Determine next stage based on LLM intent detection
+            # For onboarding, use LLM to understand if user wants to proceed
             if stage == JourneyStage.ONBOARDING:
-                user_msg = context.user_message.lower() if context.user_message else ""
-
-                # Only advance if user explicitly asks for ideas with clear intent
-                # Must be a deliberate request, not incidental word usage
-                explicit_ready_phrases = [
-                    "show me ideas", "see ideas", "see some ideas",
-                    "generate ideas", "ready for ideas", "want ideas",
-                    "let's see ideas", "give me ideas", "i'm ready",
-                    "yes please", "yes, i'm ready", "yeah show me",
-                    "ready to see", "proceed to ideas",
-                    "validate", "market validation", "go to validation",
-                    "skip onboarding"
-                ]
-
-                is_explicit_ready = any(phrase in user_msg for phrase in explicit_ready_phrases)
-
-                # Also require that we have substantial context (user shared pain + interests)
-                # Require both onboarding summary and sufficient conversation history
-                has_context = (
+                # Require minimum context before considering transition
+                has_minimum_context = (
                     context.onboarding_summary is not None and
-                    len(context.conversation_history) >= 4  # At least 4 exchanges
+                    len(context.conversation_history) >= 1  # At least 1 exchange
                 )
 
-                if is_explicit_ready and has_context:
-                    next_stage = self.get_next_stage(stage)
+                if has_minimum_context and context.user_message:
+                    # Use LLM to detect user's intent
+                    intent = self._detect_stage_transition_intent(
+                        context.user_message,
+                        stage,
+                        context.conversation_history,
+                    )
+
+                    should_proceed = intent.get("should_proceed", False)
+                    confidence = intent.get("confidence", 0.0)
+
+                    if should_proceed and confidence >= 0.5:
+                        next_stage = self.get_next_stage(stage)
+                        LOGGER.info(f"Transitioning from {stage} to {next_stage} (confidence: {confidence})")
+                        # Don't auto-run next stage - let it run on next user message
+                    else:
+                        # Stay in onboarding for more conversation
+                        next_stage = JourneyStage.ONBOARDING
                 else:
-                    # Stay in onboarding for more conversation
+                    # Not enough context yet, stay in onboarding
                     next_stage = JourneyStage.ONBOARDING
             else:
                 next_stage = self.get_next_stage(stage)
 
-            # Only show "Next Stage" footer when actually transitioning
+            # Only show "Next Stage" footer when actually transitioning (non-auto cases)
             if next_stage != stage and next_stage != JourneyStage.COMPLETE:
                 next_stage_display = next_stage.replace("_", " ").title()
                 if next_stage == JourneyStage.PRD:
