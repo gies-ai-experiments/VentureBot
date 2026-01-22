@@ -317,7 +317,9 @@ Generate the 5 ideas now:"""
             for msg in recent_history
         ]) if recent_history else "No previous conversation"
 
-        prompt = f"""Analyze the user's message and conversation context to determine their intent.
+        # Stage-specific prompts with different levels of strictness
+        if current_stage == JourneyStage.ONBOARDING:
+            prompt = f"""Analyze the user's message and conversation context to determine their intent.
 
 Current stage: {current_stage_display}
 Next stage: {next_stage_display}
@@ -344,6 +346,35 @@ Signs user wants to continue current stage:
 - Asking clarifying questions about the process
 
 IMPORTANT: Bias towards proceeding. If the user has shared their name and a pain point, and gives any affirmative or positive response, they likely want to proceed.
+
+Respond with JSON only (no markdown, no code blocks):
+{{"should_proceed": true or false, "confidence": 0.0 to 1.0, "reason": "brief explanation"}}"""
+
+        else:
+            # Stricter prompt for middle stages - require explicit confirmation
+            prompt = f"""Analyze the user's message to determine if they EXPLICITLY want to proceed to the next stage.
+
+Current stage: {current_stage_display}
+Next stage: {next_stage_display}
+
+Recent conversation:
+{history_text}
+
+User's latest message: "{user_message}"
+
+ONLY return should_proceed=true if the user EXPLICITLY indicates they want to move forward. Look for:
+- Explicit phrases like: "continue", "proceed", "next", "move on", "let's go", "ready", "done", "looks good, let's continue"
+- Clear confirmation: "yes", "ok let's move on", "I'm satisfied"
+- For idea selection: choosing an idea number with intent to proceed (e.g., "I want idea 2", "let's go with 3")
+
+Do NOT proceed if:
+- User is asking questions about the current content
+- User is providing additional information or feedback
+- User says something generic like "hi", "interesting", "ok", "thanks"
+- User is exploring or discussing without explicit readiness to move forward
+- User shares their name or pain point (this is providing info, not confirming)
+
+IMPORTANT: Be CONSERVATIVE. Default to NOT proceeding unless the user is CLEARLY asking to move to the next stage.
 
 Respond with JSON only (no markdown, no code blocks):
 {{"should_proceed": true or false, "confidence": 0.0 to 1.0, "reason": "brief explanation"}}"""
@@ -552,8 +583,9 @@ Respond with JSON only (no markdown, no code blocks):
             if context_key:
                 setattr(context, context_key, output)
 
-            # Determine next stage based on LLM intent detection
-            # For onboarding, use LLM to understand if user wants to proceed
+            # Determine next stage based on LLM intent detection for ALL stages
+            # This creates a human-in-the-loop experience where users confirm before advancing
+            
             if stage == JourneyStage.ONBOARDING:
                 # Require minimum context before considering transition
                 has_minimum_context = (
@@ -562,26 +594,69 @@ Respond with JSON only (no markdown, no code blocks):
                 )
 
                 if has_minimum_context and context.user_message:
-                    # Use LLM to detect user's intent
                     intent = self._detect_stage_transition_intent(
                         context.user_message,
                         stage,
                         context.conversation_history,
                     )
-
                     should_proceed = intent.get("should_proceed", False)
                     confidence = intent.get("confidence", 0.0)
 
                     if should_proceed and confidence >= 0.5:
                         next_stage = self.get_next_stage(stage)
                         LOGGER.info(f"Transitioning from {stage} to {next_stage} (confidence: {confidence})")
-                        # Don't auto-run next stage - let it run on next user message
                     else:
-                        # Stay in onboarding for more conversation
                         next_stage = JourneyStage.ONBOARDING
                 else:
-                    # Not enough context yet, stay in onboarding
                     next_stage = JourneyStage.ONBOARDING
+                    
+            elif stage == JourneyStage.IDEA_GENERATION:
+                # For idea generation, detect if user selected an idea (1-5) as confirmation
+                import re
+                idea_selection = re.search(r'\b([1-5])\b', context.user_message or "")
+                
+                if idea_selection:
+                    # User selected an idea - this is implicit confirmation to proceed
+                    selected_idea = idea_selection.group(1)
+                    LOGGER.info(f"User selected idea #{selected_idea}, proceeding to validation")
+                    next_stage = self.get_next_stage(stage)
+                    # Store the selection in context for validation stage
+                    context.startup_idea = f"User selected idea #{selected_idea} from the idea slate"
+                else:
+                    # User might be asking questions or exploring - check intent
+                    intent = self._detect_stage_transition_intent(
+                        context.user_message or "",
+                        stage,
+                        context.conversation_history,
+                    )
+                    should_proceed = intent.get("should_proceed", False)
+                    confidence = intent.get("confidence", 0.0)
+
+                    if should_proceed and confidence >= 0.6:
+                        next_stage = self.get_next_stage(stage)
+                        LOGGER.info(f"Transitioning from {stage} to {next_stage} (confidence: {confidence})")
+                    else:
+                        # Stay in idea generation - user is exploring
+                        next_stage = JourneyStage.IDEA_GENERATION
+                        LOGGER.info(f"Staying in {stage} - user exploring ideas (confidence: {confidence})")
+                        
+            elif stage in [JourneyStage.VALIDATION, JourneyStage.PRD, JourneyStage.PROMPT_ENGINEERING]:
+                # For complex stages, require explicit confirmation to proceed
+                intent = self._detect_stage_transition_intent(
+                    context.user_message or "",
+                    stage,
+                    context.conversation_history,
+                )
+                should_proceed = intent.get("should_proceed", False)
+                confidence = intent.get("confidence", 0.0)
+
+                if should_proceed and confidence >= 0.5:
+                    next_stage = self.get_next_stage(stage)
+                    LOGGER.info(f"Transitioning from {stage} to {next_stage} (confidence: {confidence})")
+                else:
+                    # Stay in current stage - awaiting explicit confirmation
+                    next_stage = stage
+                    LOGGER.info(f"Staying in {stage} - awaiting confirmation (confidence: {confidence})")
             else:
                 next_stage = self.get_next_stage(stage)
 

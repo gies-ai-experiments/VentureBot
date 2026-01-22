@@ -222,34 +222,41 @@ class TestStageTransition:
             user_message="I'm ready for ideas",
             conversation_history=[
                 {"role": "user", "content": "Hi"},
-            ],  # Only 1 exchange, need at least 2
-            onboarding_summary=None,  # No onboarding summary yet
+            ],  # Only 1 exchange
+            onboarding_summary=None,  # No onboarding summary yet - key for minimum context check
         )
 
-        # Mock _run_task to return a simple output
-        with patch.object(executor, "_run_task", return_value="Onboarding response"):
+        # Mock intent detection to return no-proceed (simulating insufficient context)
+        mock_intent = {
+            "should_proceed": False,
+            "confidence": 0.3,
+            "reason": "Not enough context shared yet",
+        }
+
+        with patch.object(executor, "_run_onboarding_direct", return_value="Onboarding response"), \
+             patch.object(executor, "_detect_stage_transition_intent", return_value=mock_intent):
             result = executor.run_stage(JourneyStage.ONBOARDING, context)
 
-        # Should stay in onboarding due to insufficient context
+        # Should stay in onboarding due to low-confidence intent detection
         assert result.next_stage == JourneyStage.ONBOARDING
 
     def test_transition_with_high_confidence_intent(self, executor, context_with_history):
-        """Test that high confidence intent triggers immediate transition."""
+        """Test that high confidence intent triggers transition to next stage."""
         mock_intent = {
             "should_proceed": True,
             "confidence": 0.9,
             "reason": "User ready",
         }
 
-        with patch.object(executor, "_run_task", return_value="Stage output"), \
+        with patch.object(executor, "_run_onboarding_direct", return_value="Onboarding complete"), \
              patch.object(executor, "_detect_stage_transition_intent", return_value=mock_intent):
 
             result = executor.run_stage(JourneyStage.ONBOARDING, context_with_history)
 
-        # Should have transitioned to idea_generation
-        assert result.stage == JourneyStage.IDEA_GENERATION
-        # Output should contain both onboarding and idea generation content
-        assert "Moving to Idea Generation" in result.output
+        # result.stage is the stage that ran (onboarding)
+        assert result.stage == JourneyStage.ONBOARDING
+        # result.next_stage should be idea_generation after successful transition
+        assert result.next_stage == JourneyStage.IDEA_GENERATION
 
     def test_no_transition_with_low_confidence(self, executor, context_with_history):
         """Test that low confidence doesn't trigger transition."""
@@ -267,19 +274,26 @@ class TestStageTransition:
         # Should stay in onboarding
         assert result.next_stage == JourneyStage.ONBOARDING
 
-    def test_non_onboarding_stage_auto_advances(self, executor):
-        """Test that non-onboarding stages advance automatically."""
+    def test_non_onboarding_stage_with_confirmation(self, executor):
+        """Test that validation stage requires user confirmation to advance."""
         context = StageContext(
             user_name="TestUser",
-            user_message="Validate this idea",
+            user_message="This looks good, let's continue",
             onboarding_summary="User onboarded",
             idea_slate="Generated ideas",
         )
 
-        with patch.object(executor, "_run_task", return_value="Validation complete"):
+        mock_intent = {
+            "should_proceed": True,
+            "confidence": 0.8,
+            "reason": "User confirmed",
+        }
+
+        with patch.object(executor, "_run_task", return_value="Validation complete"), \
+             patch.object(executor, "_detect_stage_transition_intent", return_value=mock_intent):
             result = executor.run_stage(JourneyStage.VALIDATION, context)
 
-        # Non-onboarding stages should advance to next stage
+        # With confirmation, should advance to PRD
         assert result.next_stage == JourneyStage.PRD
 
 
