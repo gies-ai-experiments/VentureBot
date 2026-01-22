@@ -1,0 +1,79 @@
+name: Build & Push VentureBot Images (Harbor)
+
+on:
+  push:
+    branches: [ "prod" ]
+  workflow_dispatch: {}
+
+
+env:
+  REGISTRY: hub.ncsa.illinois.edu
+  IMAGE_NAME_BACKEND: gies-dsrs/venturebot-backend
+  IMAGE_NAME_FRONTEND: gies-dsrs/venturebot-frontend
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.ts.outputs.tag }}
+    steps:
+      - name: Set timestamp tag
+        id: ts
+        shell: bash
+        run: echo "tag=$(date -u +%Y%m%d-%H%M%S)" >> "$GITHUB_OUTPUT"
+
+  backend:
+    runs-on: ubuntu-latest
+    needs: prep
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Build & push backend (amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:${{ needs.prep.outputs.tag }}
+
+  frontend:
+    runs-on: ubuntu-latest
+    needs: prep
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Build & push frontend (amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend/
+          file: ./frontend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}:${{ needs.prep.outputs.tag }}
