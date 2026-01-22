@@ -1,0 +1,25 @@
+# Dependencies (will be installed fresh in container)
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Testing
+test-results/
+playwright-report/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
