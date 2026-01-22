@@ -42,7 +42,6 @@ class OpenAIWebSearchTool(BaseTool):
     args_schema: Type[BaseModel] = OpenAIWebSearchInput
     
     model: str = Field(default="gpt-4o")
-    reasoning_effort: str = Field(default="low")
     
     def _run(self, query: str) -> str:
         """
@@ -67,7 +66,6 @@ class OpenAIWebSearchTool(BaseTool):
                 },
                 json={
                     "model": self.model,
-                    "reasoning": {"effort": self.reasoning_effort},
                     "tools": [
                         {
                             "type": "web_search"
