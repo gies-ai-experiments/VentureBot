@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -573,7 +574,19 @@ Respond with JSON only (no markdown, no code blocks):
             if stage == JourneyStage.ONBOARDING:
                 output = self._run_onboarding_direct(context)
             elif stage == JourneyStage.IDEA_GENERATION:
-                output = self._run_idea_generation_direct(context)
+                # Check if user selected an idea (1-5) BEFORE regenerating ideas
+                idea_selection = re.search(r'\b([1-5])\b', context.user_message or "")
+                if idea_selection and context.idea_slate:
+                    # User selected an idea - acknowledge and prepare for validation
+                    selected_num = idea_selection.group(1)
+                    context.startup_idea = f"User selected idea #{selected_num} from the idea slate"
+                    output = (
+                        f"Great choice! You've selected **idea #{selected_num}**.\n\n"
+                        f"I'll now help you validate this idea through market research and competitive analysis."
+                    )
+                else:
+                    # Generate new ideas
+                    output = self._run_idea_generation_direct(context)
             else:
                 # Use CrewAI for complex stages (validation, PRD, prompt engineering)
                 output = self._run_task(task_key, context, stage)
@@ -612,10 +625,9 @@ Respond with JSON only (no markdown, no code blocks):
                     
             elif stage == JourneyStage.IDEA_GENERATION:
                 # For idea generation, detect if user selected an idea (1-5) as confirmation
-                import re
                 idea_selection = re.search(r'\b([1-5])\b', context.user_message or "")
-                
-                if idea_selection:
+
+                if idea_selection and context.idea_slate:
                     # User selected an idea - this is implicit confirmation to proceed
                     selected_idea = idea_selection.group(1)
                     LOGGER.info(f"User selected idea #{selected_idea}, proceeding to validation")
