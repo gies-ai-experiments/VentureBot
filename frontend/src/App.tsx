@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import "./App.css";
 import ReactMarkdown from "react-markdown";
@@ -41,6 +41,9 @@ type GatewayEvent =
 const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
   "http://localhost:8000";
+
+const MAX_TEXTAREA_HEIGHT = 160;
+const SCROLL_THRESHOLD = 96;
 
 const extractGraphData = (message: ChatMessage): ChatMessage => {
   // Regex to find JSON block at the end of the message: ```json { ... } ```
@@ -226,10 +229,15 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showStageTransition, setShowStageTransition] = useState(false);
   const [previousStage, setPreviousStage] = useState<string | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const webSocketRef = useRef<WebSocket | null>(null);
   const streamingMessageRef = useRef<ChatMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatWindowRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const lastMessageIdRef = useRef<string | null>(null);
 
   const isReady = status === "ready";
   const isConnectInFlight = status === "connecting" || status === "idle";
@@ -244,6 +252,28 @@ function App() {
     const lastAssistantMsg = [...messages].reverse().find(m => m.role === "assistant");
     return getQuickReplies(session?.current_stage, lastAssistantMsg?.content);
   }, [session?.current_stage, messages]);
+
+  const isNearBottom = useCallback(() => {
+    const container = chatWindowRef.current;
+    if (!container) return true;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    return distanceFromBottom < SCROLL_THRESHOLD;
+  }, []);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+    setUnreadCount(0);
+    setIsAtBottom(true);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const nearBottom = isNearBottom();
+    setIsAtBottom(nearBottom);
+    if (nearBottom) {
+      setUnreadCount(0);
+    }
+  }, [isNearBottom]);
 
   // Handle stage transitions
   useEffect(() => {
@@ -307,8 +337,39 @@ function App() {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const nextHeight = Math.min(textarea.scrollHeight, MAX_TEXTAREA_HEIGHT);
+    textarea.style.height = `${nextHeight}px`;
+  }, [inputValue]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+    const previousId = lastMessageIdRef.current;
+    const isNewMessage = lastMessage.id !== previousId;
+    const isStreamingFinalized =
+      previousId === "streaming" &&
+      lastMessage.id !== "streaming" &&
+      lastMessage.role === "assistant";
+
+    lastMessageIdRef.current = lastMessage.id;
+
+    if (
+      isNewMessage &&
+      !isStreamingFinalized &&
+      !isAtBottom &&
+      lastMessage.role === "assistant"
+    ) {
+      setUnreadCount((count) => count + 1);
+    }
+
+    if (isAtBottom || lastMessage.role === "user") {
+      scrollToBottom("smooth");
+    }
+  }, [messages, isAtBottom, scrollToBottom]);
 
   const connectWebSocket = (sessionId: string) => {
     const wsUrl = `${toWebSocketUrl(API_BASE_URL)}/api/chat/ws/${sessionId}`;
@@ -449,7 +510,15 @@ function App() {
         <StageTransition stage={session.current_stage} />
       )}
 
-      <main className="chat-window">
+      <main
+        className="chat-window"
+        ref={chatWindowRef}
+        onScroll={handleScroll}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        aria-busy={isSending}
+      >
         {messages.length === 0 && (
           <div className="empty-state">
             <div className="empty-state-icon">🔑</div>
@@ -477,33 +546,50 @@ function App() {
           </div>
         )}
 
-        {messages.map((message, index) => (
-          <article
-            key={message.id}
-            className={`message message--${message.role}`}
-            style={{ animationDelay: `${index * 0.05}s` }}
-          >
-            <div className="message-avatar">
-              {message.role === "user" ? "👤" : "🤖"}
-            </div>
-            <div className="message-bubble">
-              <div className="message-metadata">
-                <span className="message-role">
-                  {message.role === "user" ? "You" : "VentureBot"}
-                </span>
-                {message.created_at && (
-                  <time>{formatTimestamp(message.created_at)}</time>
+        {messages.map((message, index) => {
+          const previous = messages[index - 1];
+          const isGrouped = previous?.role === message.role;
+
+          return (
+            <article
+              key={message.id}
+              className={`message message--${message.role} ${isGrouped ? "message--grouped" : ""}`}
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <div
+                className={`message-avatar ${isGrouped ? "message-avatar--hidden" : ""}`}
+                aria-hidden={isGrouped ? "true" : undefined}
+              >
+                {message.role === "user" ? "👤" : "🤖"}
+              </div>
+              <div className="message-bubble">
+                {!isGrouped && (
+                  <div className="message-metadata">
+                    <span className="message-role">
+                      {message.role === "user" ? "You" : "VentureBot"}
+                    </span>
+                    {message.created_at && (
+                      <time>{formatTimestamp(message.created_at)}</time>
+                    )}
+                  </div>
                 )}
+                <div className="message-content">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.content}
+                  </ReactMarkdown>
+                  {message.graph_data && <DataVisualizer data={message.graph_data} />}
+                </div>
               </div>
-              <div className="message-content">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {message.content}
-                </ReactMarkdown>
-                {message.graph_data && <DataVisualizer data={message.graph_data} />}
-              </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
+
+        {unreadCount > 0 && !isAtBottom && (
+          <button className="scroll-to-latest" onClick={() => scrollToBottom("smooth")}>
+            {unreadCount} new message{unreadCount > 1 ? "s" : ""}
+            <span aria-hidden="true">↓</span>
+          </button>
+        )}
 
         {isSending && <TypingIndicator />}
 
@@ -532,6 +618,8 @@ function App() {
             onChange={(event) => setInputValue(event.target.value)}
             disabled={!isReady || isSending}
             onKeyDown={handleComposerKeyDown}
+            ref={textareaRef}
+            aria-label="Message VentureBot"
           />
           <button
             type="submit"
