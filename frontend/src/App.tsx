@@ -13,6 +13,7 @@ type ChatMessage = {
   content: string;
   graph_data?: GraphData; // Optional graph data from backend
   created_at?: string;
+  suggested_replies?: string[];
 };
 
 type ChatSession = {
@@ -45,27 +46,71 @@ const API_BASE_URL =
 const MAX_TEXTAREA_HEIGHT = 160;
 const SCROLL_THRESHOLD = 96;
 
-const extractGraphData = (message: ChatMessage): ChatMessage => {
-  // Regex to find JSON block at the end of the message: ```json { ... } ```
-  const jsonBlockRegex = /```json\s*(\{[\s\S]*?"json_graph_data"[\s\S]*?\})\s*```/;
-  const match = message.content.match(jsonBlockRegex);
+const stripNextStageFooter = (content: string) => {
+  const footerRegex = /(?:\n|\r|\s)*---\s*\n\s*\*\*Next Stage:[\s\S]*$/i;
+  const plainFooterRegex = /(?:\n|\r|\s)*Next Stage:[\s\S]*$/i;
+  return content.replace(footerRegex, "").replace(plainFooterRegex, "").trim();
+};
 
-  if (match && match[1]) {
+const extractGraphData = (message: ChatMessage): ChatMessage => {
+  const jsonBlockRegex = /```json\s*(\{[\s\S]*?"json_graph_data"[\s\S]*?\})\s*```/;
+  const fencedMatch = message.content.match(jsonBlockRegex);
+
+  const cleanContent = stripNextStageFooter(message.content);
+
+  if (fencedMatch && fencedMatch[1]) {
     try {
-      const parsed = JSON.parse(match[1]);
+      const parsed = JSON.parse(fencedMatch[1]);
       if (parsed.json_graph_data) {
-        // Return message with graph data and content STRIPPED of the JSON block
         return {
           ...message,
-          content: message.content.replace(match[0], '').trim(),
-          graph_data: parsed.json_graph_data
+          content: cleanContent.replace(fencedMatch[0], "").trim(),
+          graph_data: parsed.json_graph_data,
         };
       }
     } catch (e) {
       console.error("Failed to parse graph data JSON", e);
     }
   }
-  return message;
+
+  const graphIndex = cleanContent.indexOf("\"json_graph_data\"");
+  if (graphIndex !== -1) {
+    const startIndex = cleanContent.lastIndexOf("{", graphIndex);
+    if (startIndex !== -1) {
+      let depth = 0;
+      let endIndex = -1;
+      for (let i = startIndex; i < cleanContent.length; i += 1) {
+        const char = cleanContent[i];
+        if (char === "{") depth += 1;
+        if (char === "}") depth -= 1;
+        if (depth === 0) {
+          endIndex = i;
+          break;
+        }
+      }
+      if (endIndex !== -1) {
+        const jsonSlice = cleanContent.slice(startIndex, endIndex + 1);
+        try {
+          const parsed = JSON.parse(jsonSlice);
+          if (parsed.json_graph_data) {
+            const stripped = cleanContent.replace(jsonSlice, "").trim();
+            return {
+              ...message,
+              content: stripped,
+              graph_data: parsed.json_graph_data,
+            };
+          }
+        } catch (e) {
+          console.error("Failed to parse inline graph data JSON", e);
+        }
+      }
+    }
+  }
+
+  return {
+    ...message,
+    content: cleanContent,
+  };
 };
 
 const toWebSocketUrl = (baseUrl: string) => {
@@ -99,7 +144,7 @@ const JOURNEY_STAGES = [
 
 // Quick reply suggestions based on stage
 // Only show for stages with clear choices, not during free-form conversation
-const getQuickReplies = (stage?: string, lastAssistantMessage?: string): string[] => {
+const getQuickReplies = (stage?: string): string[] => {
   if (!stage) return [];
 
   switch (stage) {
@@ -107,16 +152,8 @@ const getQuickReplies = (stage?: string, lastAssistantMessage?: string): string[
       // No quick replies during conversational onboarding
       return [];
     case "idea_generation":
-      // Only show number options if ideas have been generated
-      if (lastAssistantMessage && /Here are \d+ keys|1\.\s+\*\*/.test(lastAssistantMessage)) {
-        return ["1", "2", "3", "4", "5"];
-      }
       return [];
     case "validation":
-      // Only show options if validation report is displayed
-      if (lastAssistantMessage && /Market Size|Feasibility|Recommendation/.test(lastAssistantMessage)) {
-        return ["Proceed to PRD", "Try a different idea"];
-      }
       return [];
     case "prd":
       return ["Generate prompts", "Refine requirements"];
@@ -125,6 +162,70 @@ const getQuickReplies = (stage?: string, lastAssistantMessage?: string): string[
     default:
       return [];
   }
+};
+
+const VALIDATION_SECTION_LABELS = [
+  "Market Size",
+  "Competitive Landscape",
+  "Feasibility Score",
+  "Key Risks",
+  "Recommendation",
+  "Actionable next steps",
+];
+
+const parseValidationContent = (content: string) => {
+  const lines = content.split("\n");
+  const sections: { title: string; body: string }[] = [];
+  let currentTitle: string | null = null;
+  let buffer: string[] = [];
+
+  const flush = () => {
+    if (currentTitle) {
+      sections.push({ title: currentTitle, body: buffer.join("\n").trim() });
+    }
+    buffer = [];
+  };
+
+  for (const line of lines) {
+    const cleaned = line.replace(/\*\*/g, "").trim();
+    const matchedTitle = VALIDATION_SECTION_LABELS.find(
+      (label) => cleaned.toLowerCase() === label.toLowerCase()
+    );
+    if (matchedTitle) {
+      flush();
+      currentTitle = matchedTitle;
+      continue;
+    }
+    if (currentTitle) {
+      buffer.push(line);
+    }
+  }
+  flush();
+
+  if (sections.length < 2) {
+    return null;
+  }
+
+  const allText = lines.join("\n");
+  const feasibilityLine = allText.match(/Feasibility Score:.*$/im)?.[0]?.trim() ?? "";
+  const recommendationLine = allText.match(/Recommendation:.*$/im)?.[0]?.trim() ?? "";
+  const risksSection = sections.find((section) => section.title === "Key Risks");
+  const topRisks = risksSection
+    ? risksSection.body
+        .split("\n")
+        .map((line) => line.replace(/^[\-\*\d\.\s]+/, "").trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+
+  return {
+    summary: {
+      feasibility: feasibilityLine,
+      recommendation: recommendationLine,
+      risks: topRisks,
+    },
+    sections,
+  };
 };
 
 function JourneyProgress({ currentStage }: { currentStage?: string }) {
@@ -218,6 +319,62 @@ function StageTransition({ stage }: { stage: string }) {
   );
 }
 
+function ValidationReport({
+  data,
+}: {
+  data: NonNullable<ReturnType<typeof parseValidationContent>>;
+}) {
+  const { summary, sections } = data;
+  const detailSections = sections.filter(
+    (section) => section.title !== "Feasibility Score" && section.title !== "Recommendation"
+  );
+
+  return (
+    <div className="validation-report">
+      <div className="validation-summary">
+        <div className="summary-header">Validation Snapshot</div>
+        <div className="summary-grid">
+          {summary.feasibility && (
+            <div className="summary-card">
+              <span className="summary-label">Feasibility</span>
+              <span className="summary-value">{summary.feasibility}</span>
+            </div>
+          )}
+          {summary.recommendation && (
+            <div className="summary-card">
+              <span className="summary-label">Recommendation</span>
+              <span className="summary-value">{summary.recommendation}</span>
+            </div>
+          )}
+        </div>
+        {summary.risks.length > 0 && (
+          <div className="summary-risks">
+            <span className="summary-label">Top Risks</span>
+            <ul>
+              {summary.risks.map((risk) => (
+                <li key={risk}>{risk}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="validation-sections">
+        {detailSections.map((section) => (
+          <details key={section.title} className="validation-section" open={section.title === "Market Size"}>
+            <summary>{section.title}</summary>
+            <div className="validation-section-body">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {section.body}
+              </ReactMarkdown>
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [session, setSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -250,7 +407,10 @@ function App() {
   const quickReplies = useMemo(() => {
     // Get the last assistant message to check if content is ready for quick replies
     const lastAssistantMsg = [...messages].reverse().find(m => m.role === "assistant");
-    return getQuickReplies(session?.current_stage, lastAssistantMsg?.content);
+    if (lastAssistantMsg?.suggested_replies?.length) {
+      return lastAssistantMsg.suggested_replies;
+    }
+    return getQuickReplies(session?.current_stage);
   }, [session?.current_stage, messages]);
 
   const isNearBottom = useCallback(() => {
@@ -549,6 +709,8 @@ function App() {
         {messages.map((message, index) => {
           const previous = messages[index - 1];
           const isGrouped = previous?.role === message.role;
+          const validationData =
+            message.role === "assistant" ? parseValidationContent(message.content) : null;
 
           return (
             <article
@@ -574,9 +736,13 @@ function App() {
                   </div>
                 )}
                 <div className="message-content">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {message.content}
-                  </ReactMarkdown>
+                  {validationData ? (
+                    <ValidationReport data={validationData} />
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  )}
                   {message.graph_data && <DataVisualizer data={message.graph_data} />}
                 </div>
               </div>

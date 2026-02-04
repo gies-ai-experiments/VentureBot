@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import logging
+import json
 from typing import Iterable, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -17,6 +18,24 @@ from ..orchestrator_client import generate_assistant_reply, run_onboarding
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+
+def _build_suggested_replies(stage: str, updated_context_json: str) -> List[str]:
+    if stage == JourneyStage.IDEA_GENERATION.value:
+        try:
+            context = json.loads(updated_context_json or "{}")
+        except json.JSONDecodeError:
+            context = {}
+        if context.get("idea_slate"):
+            return ["1", "2", "3", "4", "5"]
+        return []
+    if stage == JourneyStage.VALIDATION.value:
+        return ["Proceed to PRD", "Try a different idea"]
+    if stage == JourneyStage.PRD.value:
+        return ["Generate prompts", "Refine requirements"]
+    if stage == JourneyStage.PROMPT_ENGINEERING.value:
+        return ["Copy prompt", "Start over"]
+    return []
 
 
 def _fetch_session(db: Session, session_id: str) -> ChatSession:
@@ -127,7 +146,7 @@ def list_messages(session_id: str, db: Session = Depends(get_session)) -> list[s
 
 async def _process_user_message(
     db: Session, session: ChatSession, content: str
-) -> tuple[ChatMessage, ChatMessage, str]:
+) -> tuple[ChatMessage, ChatMessage, str, str]:
     """
     Process a user message and generate the next stage's response.
     
@@ -189,7 +208,7 @@ async def _process_user_message(
     db.refresh(assistant_message)
     db.refresh(session)
 
-    return user_message, assistant_message, reply_text
+    return user_message, assistant_message, reply_text, updated_context
 
 
 @router.post(
@@ -213,7 +232,7 @@ async def send_message(
         )
 
     session = _fetch_session(db, session_id)
-    user_message, assistant_message, _ = await _process_user_message(
+    user_message, assistant_message, _, updated_context = await _process_user_message(
         db, session, payload.content
     )
 
@@ -221,10 +240,14 @@ async def send_message(
     db.refresh(session)
     session_read = schemas.ChatSessionRead.model_validate(session)
     
+    suggested_replies = _build_suggested_replies(session_read.current_stage, updated_context)
+    assistant_read = schemas.ChatMessageRead.model_validate(assistant_message)
+    assistant_read.suggested_replies = suggested_replies
+
     return schemas.ChatTurnResponse(
         session=session_read,
         user_message=schemas.ChatMessageRead.model_validate(user_message),
-        assistant_message=schemas.ChatMessageRead.model_validate(assistant_message),
+        assistant_message=assistant_read,
     )
 
 
@@ -327,7 +350,7 @@ async def chat_websocket(websocket: WebSocket, session_id: str) -> None:
             content = payload.get("content", "")
             try:
                 LOGGER.info(f"Processing user message: {content[:50]}...")
-                user_message, assistant_message, reply_text = await _process_user_message(
+                user_message, assistant_message, reply_text, updated_context = await _process_user_message(
                     db, session, content
                 )
                 LOGGER.info(f"Generated reply (length {len(reply_text)}): {reply_text[:50]}...")
@@ -352,12 +375,17 @@ async def chat_websocket(websocket: WebSocket, session_id: str) -> None:
             for chunk in _chunk_text(reply_text):
                 await websocket.send_json({"event": "assistant_token", "data": chunk})
 
+            assistant_payload = schemas.ChatMessageRead.model_validate(
+                assistant_message
+            )
+            assistant_payload.suggested_replies = _build_suggested_replies(
+                session.current_stage, updated_context
+            )
+
             await websocket.send_json(
                 {
                     "event": "assistant_message",
-                    "data": schemas.ChatMessageRead.model_validate(
-                        assistant_message
-                    ).model_dump(mode="json"),
+                    "data": assistant_payload.model_dump(mode="json"),
                 }
             )
             

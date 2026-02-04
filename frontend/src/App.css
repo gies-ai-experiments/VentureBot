@@ -44,7 +44,8 @@
    Base Layout
    ============================================ */
 .app-shell {
-  min-height: 100vh;
+  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
@@ -530,6 +531,110 @@
 
 .message--user .message-content {
   color: var(--text-primary);
+}
+
+/* ============================================
+   Validation Report
+   ============================================ */
+.validation-report {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.validation-summary {
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+}
+
+.summary-header {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.summary-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.summary-card {
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-value {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.summary-risks {
+  margin-top: 0.75rem;
+}
+
+.summary-risks ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.validation-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.validation-section {
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+}
+
+.validation-section summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 0.35rem 0.25rem;
+  list-style: none;
+}
+
+.validation-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.validation-section summary::after {
+  content: "▾";
+  float: right;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+}
+
+.validation-section[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.validation-section-body {
+  padding: 0.5rem 0.25rem 0.75rem;
+  color: var(--text-secondary);
 }
 
 /* ============================================

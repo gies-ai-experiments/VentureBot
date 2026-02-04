@@ -108,3 +108,39 @@ test.describe('Journey Stage Progression', () => {
     await expect(discoveryStep).toContainText('Discovery')
   })
 })
+
+test.describe('Idea Selection Flow', () => {
+  test('stays in idea generation until a number is selected', async ({ page }) => {
+    test.setTimeout(120000)
+    await page.goto('/')
+
+    await page.waitForSelector('.connection-pill--ready', { timeout: 15000 }).catch(() => {
+      test.skip(true, 'Backend not available')
+    })
+
+    const textarea = page.locator('textarea[name="message"]')
+    const sendButton = page.locator('button[type="submit"]')
+
+    await textarea.fill("Hi, I'm Alex. I want to build an AI tool for sales teams.")
+    await sendButton.click()
+
+    await expect(page.locator('.message--assistant').first()).toBeVisible({ timeout: 30000 })
+
+    await textarea.fill('Yes, generate ideas.')
+    await sendButton.click()
+
+    await expect(page.getByText('Here are 5 keys', { exact: false })).toBeVisible({ timeout: 45000 })
+
+    const currentStageLabel = page.locator('.journey-step.current .step-label')
+    await expect(currentStageLabel).toContainText('Ideas')
+
+    const ideaChip = page.getByRole('button', { name: '1' })
+    await expect(ideaChip).toBeVisible()
+    await ideaChip.click()
+
+    await expect(currentStageLabel).toContainText('Validate', { timeout: 120000 })
+    await expect(page.getByRole('button', { name: 'Proceed to PRD' })).toBeVisible({
+      timeout: 120000,
+    })
+  })
+})

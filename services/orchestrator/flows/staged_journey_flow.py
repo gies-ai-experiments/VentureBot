@@ -292,6 +292,27 @@ Generate the 5 ideas now:"""
             LOGGER.error(f"Direct idea generation failed: {e}")
             return "I encountered an issue generating ideas. Could you tell me more about your pain point?"
 
+    @staticmethod
+    def _extract_idea_choice(idea_slate: str, selection: str) -> str:
+        """Extract the selected idea details from the idea slate."""
+        import re
+
+        if not idea_slate:
+            return f"Idea #{selection}"
+
+        lines = [line.strip() for line in idea_slate.splitlines() if line.strip()]
+        pattern = re.compile(r"^\s*(\d+)\.\s+\*\*(.+?)\*\*:\s*(.+)$")
+
+        for line in lines:
+            match = pattern.match(line)
+            if not match:
+                continue
+            number, name, description = match.group(1), match.group(2), match.group(3)
+            if number == selection:
+                return f"{name}: {description}"
+
+        return f"Idea #{selection} from the idea slate"
+
     def _detect_stage_transition_intent(
         self,
         user_message: str,
@@ -568,6 +589,33 @@ Respond with JSON only (no markdown, no code blocks):
             )
         
         try:
+            if stage == JourneyStage.IDEA_GENERATION:
+                import re
+
+                selection_match = re.search(r"\b([1-5])\b", context.user_message or "")
+                if selection_match and context.idea_slate:
+                    selection = selection_match.group(1)
+                    context.startup_idea = self._extract_idea_choice(
+                        context.idea_slate, selection
+                    )
+                    LOGGER.info(
+                        "User selected idea #%s; running validation immediately.", selection
+                    )
+
+                    validation_output = self._run_task(
+                        STAGE_TO_TASK[JourneyStage.VALIDATION],
+                        context,
+                        JourneyStage.VALIDATION,
+                    )
+                    context.validation_report = validation_output
+                    return StageResult(
+                        stage=JourneyStage.VALIDATION,
+                        output=validation_output,
+                        next_stage=JourneyStage.VALIDATION,
+                        context=context,
+                        is_complete=False,
+                    )
+
             # Run the task for this stage
             # Use direct LLM for fast stages, CrewAI for complex stages
             if stage == JourneyStage.ONBOARDING:
@@ -611,34 +659,9 @@ Respond with JSON only (no markdown, no code blocks):
                     next_stage = JourneyStage.ONBOARDING
                     
             elif stage == JourneyStage.IDEA_GENERATION:
-                # For idea generation, detect if user selected an idea (1-5) as confirmation
-                import re
-                idea_selection = re.search(r'\b([1-5])\b', context.user_message or "")
-                
-                if idea_selection:
-                    # User selected an idea - this is implicit confirmation to proceed
-                    selected_idea = idea_selection.group(1)
-                    LOGGER.info(f"User selected idea #{selected_idea}, proceeding to validation")
-                    next_stage = self.get_next_stage(stage)
-                    # Store the selection in context for validation stage
-                    context.startup_idea = f"User selected idea #{selected_idea} from the idea slate"
-                else:
-                    # User might be asking questions or exploring - check intent
-                    intent = self._detect_stage_transition_intent(
-                        context.user_message or "",
-                        stage,
-                        context.conversation_history,
-                    )
-                    should_proceed = intent.get("should_proceed", False)
-                    confidence = intent.get("confidence", 0.0)
-
-                    if should_proceed and confidence >= 0.6:
-                        next_stage = self.get_next_stage(stage)
-                        LOGGER.info(f"Transitioning from {stage} to {next_stage} (confidence: {confidence})")
-                    else:
-                        # Stay in idea generation - user is exploring
-                        next_stage = JourneyStage.IDEA_GENERATION
-                        LOGGER.info(f"Staying in {stage} - user exploring ideas (confidence: {confidence})")
+                # Stay in idea generation until the user selects an idea number.
+                next_stage = JourneyStage.IDEA_GENERATION
+                LOGGER.info("Staying in idea generation - awaiting idea selection.")
                         
             elif stage in [JourneyStage.VALIDATION, JourneyStage.PRD, JourneyStage.PROMPT_ENGINEERING]:
                 # For complex stages, require explicit confirmation to proceed
@@ -659,16 +682,6 @@ Respond with JSON only (no markdown, no code blocks):
                     LOGGER.info(f"Staying in {stage} - awaiting confirmation (confidence: {confidence})")
             else:
                 next_stage = self.get_next_stage(stage)
-
-            # Only show "Next Stage" footer when actually transitioning (non-auto cases)
-            if next_stage != stage and next_stage != JourneyStage.COMPLETE:
-                next_stage_display = next_stage.replace("_", " ").title()
-                if next_stage == JourneyStage.PRD:
-                    next_stage_display = "Product Requirements (PRD)"
-                elif next_stage == JourneyStage.VALIDATION:
-                    next_stage_display = "Market Validation"
-
-                output += f"\n\n---\n\n**Next Stage: {next_stage_display}**\n\nPlease let me know when you are ready to proceed."
 
             return StageResult(
                 stage=stage,

@@ -14,6 +14,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  height: 100%;
 }
 
 body {
@@ -21,11 +22,12 @@ body {
   background-color: #0a0f1a;
   color: #f1f5f9;
   line-height: 1.5;
-  min-height: 100vh;
+  min-height: 100%;
+  overflow: hidden;
 }
 
 #root {
-  min-height: 100vh;
+  height: 100%;
 }
 
 /* Form elements inherit font */

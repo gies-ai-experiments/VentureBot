@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -35,6 +35,7 @@ class ChatMessageRead(BaseModel):
     role: MessageRole
     content: str
     created_at: datetime
+    suggested_replies: Optional[List[str]] = None
 
     class Config:
         from_attributes = True
@@ -50,4 +51,3 @@ class SessionStartResponse(BaseModel):
     """Response when starting a new session with auto-onboarding."""
     session: ChatSessionRead
     onboarding_message: Optional[ChatMessageRead] = None
-
