@@ -101,5 +101,10 @@
         "eval": false,
         "Invoke-Expression": false,
         "iex": false
-    }
+    },
+    "python.testing.pytestArgs": [
+        "crewai-agents"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

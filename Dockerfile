@@ -19,9 +19,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy and install crewai-agents package with its dependencies
+COPY crewai-agents/ ./crewai-agents/
+RUN pip install --no-cache-dir ./crewai-agents/
+
 # Copy application code
 COPY services/ ./services/
-COPY crewai-agents/ ./crewai-agents/
 COPY main.py .
 
 # Create data directory for SQLite database and logs
