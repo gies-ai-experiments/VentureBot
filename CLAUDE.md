@@ -46,12 +46,9 @@ When modifying stages/agents:
 3. Update agent configs in `crewai-agents/src/venturebot_crew/config/`
 
 ## Current Focus
-- [ ] [Update during /session-start]
 
 ## Roadmap
-- [ ] [Add planned features]
 
 ## Session Log
-### 2025-12-27
-- Initial CLAUDE.md created with roadmap sections
-- Next: Define current development priorities
+
+> Full history: [session-history.md](./session-history.md)
