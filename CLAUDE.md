@@ -45,10 +45,9 @@ When modifying stages/agents:
 2. Update stage list in `frontend/src/App.tsx`
 3. Update agent configs in `crewai-agents/src/venturebot_crew/config/`
 
-## Current Focus
-
-## Roadmap
-
 ## Session Log
+
+### 2026-07-05
+- CLAUDE.md cleanup: removed empty placeholder sections (session history lives in session-history.md)
 
 > Full history: [session-history.md](./session-history.md)
